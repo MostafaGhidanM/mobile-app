@@ -2,20 +2,11 @@ import 'package:flutter/foundation.dart';
 
 class AppConstants {
   // API Configuration
-  // Using ngrok URL for public access (mobile apps)
-  // For web, use localhost to avoid ngrok browser warning
+  // Using ngrok URL for all platforms (mobile and web)
   static String get baseUrl {
-    if (kIsWeb) {
-      // For web, use localhost to avoid ngrok browser warning page
-      return const String.fromEnvironment(
-        'API_BASE_URL',
-        defaultValue: 'http://127.0.0.1:3000',
-      );
-    }
-    // For mobile apps, use localhost
     return const String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'http://127.0.0.1:3000',
+      defaultValue: 'https://interavailable-heaping-marianela.ngrok-free.dev',
     );
   }
   

@@ -298,12 +298,14 @@ class ApiClient {
       );
     } else if (error.type == DioExceptionType.connectionError) {
       debugPrint('[ApiClient] Connection error - CORS or network issue');
+      debugPrint('[ApiClient] Base URL: ${ApiEndpoints.baseUrl}');
+      debugPrint('[ApiClient] Request URL: ${error.requestOptions.uri}');
       return ApiResponse<T>(
         success: false,
         error: ApiError(
           code: 'CONNECTION_ERROR',
-          message: 'Cannot connect to server. Please check if the backend is running and CORS is configured.',
-          details: error.message,
+          message: 'Cannot connect to server. Please ensure:\n1. The backend server is running\n2. CORS is properly configured on the backend\n3. The ngrok tunnel is active\n4. You have internet connectivity',
+          details: 'URL: ${error.requestOptions.uri}\nError: ${error.message}',
         ),
       );
     } else {

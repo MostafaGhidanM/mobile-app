@@ -34,6 +34,12 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            
+            // Enable code shrinking and resource shrinking for smaller APK
+            // Note: ProGuard is disabled for now to avoid build issues
+            // You can enable it later for additional size reduction
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
