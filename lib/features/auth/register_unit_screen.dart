@@ -6,6 +6,7 @@ import '../../localization/app_localizations.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/constrained_dropdown.dart';
 import '../../core/services/recycling_unit_service.dart';
 import '../../core/services/waste_type_service.dart';
 import '../../core/models/waste_type.dart';
@@ -356,8 +357,10 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
                   const SizedBox(height: 20),
                   
                   // Gender Dropdown
-                  DropdownButtonFormField<String>(
+                  ConstrainedDropdownButtonFormField<String>(
                     value: _selectedGender,
+                    isExpanded: true,
+                    menuMaxHeight: 300,
                     decoration: InputDecoration(
                       labelText: isRTL ? 'النوع' : 'Gender',
                       border: OutlineInputBorder(
@@ -367,11 +370,19 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
                     items: [
                       DropdownMenuItem(
                         value: 'MALE',
-                        child: Text(isRTL ? 'ذكر' : 'Male'),
+                        child: Text(
+                          isRTL ? 'ذكر' : 'Male',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'FEMALE',
-                        child: Text(isRTL ? 'أنثى' : 'Female'),
+                        child: Text(
+                          isRTL ? 'أنثى' : 'Female',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ],
                     onChanged: (value) {
@@ -405,8 +416,10 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
                   const SizedBox(height: 20),
                   
                   // Waste Type Dropdown
-                  DropdownButtonFormField<WasteType>(
+                  ConstrainedDropdownButtonFormField<WasteType>(
                     value: _selectedWasteType,
+                    isExpanded: true,
+                    menuMaxHeight: 300,
                     decoration: InputDecoration(
                       labelText: isRTL ? 'نوع المخلفات' : 'Waste Type',
                       border: OutlineInputBorder(
@@ -418,7 +431,11 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
                         : _wasteTypes.map((wasteType) {
                             return DropdownMenuItem(
                               value: wasteType,
-                              child: Text(isRTL ? wasteType.nameAr : (wasteType.nameEn ?? wasteType.nameAr)),
+                              child: Text(
+                                isRTL ? wasteType.nameAr : (wasteType.nameEn ?? wasteType.nameAr),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
                     onChanged: _isLoadingWasteTypes
@@ -438,8 +455,10 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
                   const SizedBox(height: 20),
                   
                   // Unit Type Dropdown
-                  DropdownButtonFormField<String>(
+                  ConstrainedDropdownButtonFormField<String>(
                     value: _selectedUnitType,
+                    isExpanded: true,
+                    menuMaxHeight: 300,
                     decoration: InputDecoration(
                       labelText: isRTL ? 'نوع الوحدة' : 'Unit Type',
                       border: OutlineInputBorder(
@@ -449,15 +468,27 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
                     items: [
                       DropdownMenuItem(
                         value: 'PRESS',
-                        child: Text(isRTL ? 'مكبس' : 'Press'),
+                        child: Text(
+                          isRTL ? 'مكبس' : 'Press',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'SHREDDER',
-                        child: Text(isRTL ? 'تمزيق' : 'Shredder'),
+                        child: Text(
+                          isRTL ? 'تمزيق' : 'Shredder',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'WASHING_LINE',
-                        child: Text(isRTL ? 'خط غسيل' : 'Washing Line'),
+                        child: Text(
+                          isRTL ? 'خط غسيل' : 'Washing Line',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ],
                     onChanged: (value) {

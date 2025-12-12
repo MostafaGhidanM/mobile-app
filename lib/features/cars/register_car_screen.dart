@@ -9,6 +9,7 @@ import '../../core/models/car.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/constrained_dropdown.dart';
 
 class RegisterCarScreen extends StatefulWidget {
   const RegisterCarScreen({Key? key}) : super(key: key);
@@ -606,8 +607,10 @@ class _CompleteDataStep extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           // Car Brand Dropdown
-          DropdownButtonFormField<CarBrand>(
+          ConstrainedDropdownButtonFormField<CarBrand>(
             value: selectedCarBrand,
+            isExpanded: true,
+            menuMaxHeight: 300,
             decoration: InputDecoration(
               labelText: isRTL ? 'ماركة السيارة' : 'Car Brand',
               border: OutlineInputBorder(
@@ -617,15 +620,21 @@ class _CompleteDataStep extends StatelessWidget {
             items: carBrands.map((brand) {
               return DropdownMenuItem<CarBrand>(
                 value: brand,
-                child: Text(isRTL ? brand.nameAr : (brand.nameEn ?? brand.nameAr)),
+                child: Text(
+                  isRTL ? brand.nameAr : (brand.nameEn ?? brand.nameAr),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               );
             }).toList(),
             onChanged: isLoadingBrands ? null : onCarBrandChanged,
           ),
           const SizedBox(height: 20),
           // Car Type Dropdown
-          DropdownButtonFormField<CarType>(
+          ConstrainedDropdownButtonFormField<CarType>(
             value: selectedCarType,
+            isExpanded: true,
+            menuMaxHeight: 300,
             decoration: InputDecoration(
               labelText: isRTL ? 'نوع السيارة' : 'Car Type',
               border: OutlineInputBorder(
@@ -635,7 +644,11 @@ class _CompleteDataStep extends StatelessWidget {
             items: carTypes.map((type) {
               return DropdownMenuItem<CarType>(
                 value: type,
-                child: Text(isRTL ? type.nameAr : (type.nameEn ?? type.nameAr)),
+                child: Text(
+                  isRTL ? type.nameAr : (type.nameEn ?? type.nameAr),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               );
             }).toList(),
             onChanged: isLoadingTypes ? null : onCarTypeChanged,

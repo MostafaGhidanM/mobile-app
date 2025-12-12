@@ -13,6 +13,7 @@ import '../../core/models/sender.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/constrained_dropdown.dart';
 
 class ReceiveShipmentScreen extends StatefulWidget {
   const ReceiveShipmentScreen({Key? key}) : super(key: key);
@@ -24,7 +25,6 @@ class ReceiveShipmentScreen extends StatefulWidget {
 class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _weightController = TextEditingController();
-  final _cardNumberController = TextEditingController();
   
   final ShipmentService _shipmentService = ShipmentService();
   final WasteTypeService _wasteTypeService = WasteTypeService();
@@ -49,7 +49,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
   @override
   void dispose() {
     _weightController.dispose();
-    _cardNumberController.dispose();
     super.dispose();
   }
 
@@ -192,14 +191,27 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Fetch next shipment number from backend
+      final nextNumberResponse = await _shipmentService.getNextRawMaterialShipmentNumber();
+      if (!nextNumberResponse.isSuccess || nextNumberResponse.data == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(nextNumberResponse.error?.message ?? 'Failed to get next shipment number'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final response = await _shipmentService.createShipment(
         shipmentImage: _shipmentImageUrl!,
         wasteTypeId: _selectedWasteType!.id,
         weight: double.parse(_weightController.text),
         senderId: _selectedSender!.id,
-        shipmentNumber: _cardNumberController.text.isEmpty 
-            ? null 
-            : _cardNumberController.text,
+        shipmentNumber: nextNumberResponse.data,
       );
 
       if (response.isSuccess && mounted) {
@@ -273,8 +285,10 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                       ),
                       const SizedBox(height: 24),
                       // Waste Type Dropdown
-                      DropdownButtonFormField<WasteType>(
+                      ConstrainedDropdownButtonFormField<WasteType>(
                         value: _selectedWasteType,
+                        isExpanded: true,
+                        menuMaxHeight: 300,
                         decoration: InputDecoration(
                           labelText: '${localizations.translate('waste_type')} *',
                           border: OutlineInputBorder(
@@ -284,7 +298,11 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                         items: _wasteTypes.map((type) {
                           return DropdownMenuItem<WasteType>(
                             value: type,
-                            child: Text(isRTL ? type.nameAr : type.nameEn),
+                            child: Text(
+                              isRTL ? type.nameAr : type.nameEn,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -316,8 +334,10 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                       ),
                       const SizedBox(height: 20),
                       // Sender Dropdown
-                      DropdownButtonFormField<Sender>(
+                      ConstrainedDropdownButtonFormField<Sender>(
                         value: _selectedSender,
+                        isExpanded: true,
+                        menuMaxHeight: 300,
                         decoration: InputDecoration(
                           labelText: '${localizations.translate('shipment_sender')} *',
                           border: OutlineInputBorder(
@@ -327,7 +347,11 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                         items: _senders.map((sender) {
                           return DropdownMenuItem<Sender>(
                             value: sender,
-                            child: Text(sender.fullName),
+                            child: Text(
+                              sender.fullName,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -357,14 +381,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(context).colorScheme.primary,
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Card Number (Optional)
-                      CustomTextField(
-                        label: localizations.translate('card_number'),
-                        hint: localizations.translate('card_number'),
-                        controller: _cardNumberController,
-                        keyboardType: TextInputType.text,
                       ),
                       const SizedBox(height: 32),
                       // Submit Button

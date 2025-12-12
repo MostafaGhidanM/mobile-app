@@ -10,6 +10,7 @@ class ApiEndpoints {
   // Shipments
   static const String shipments = '/raw-material-shipments-received';
   static String shipmentById(String id) => '$shipments/$id';
+  static const String shipmentsNextNumber = '$shipments/next-number';
 
   // Senders
   static const String senders = '/senders';
@@ -47,6 +48,7 @@ class ApiEndpoints {
   static String processedMaterialShipmentReceive(String id) => '$processedMaterialShipmentsSent/$id/receive';
   static const String processedMaterialShipmentsPendingReceipt = '$processedMaterialShipmentsSent/pending-receipt';
   static const String processedMaterialShipmentsReceived = '$processedMaterialShipmentsSent/received';
+  static const String processedMaterialShipmentsNextNumber = '$processedMaterialShipmentsSent/next-number';
 
   // Trades
   static const String trades = '/trades';

@@ -9,6 +9,7 @@ import '../../core/models/sender.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/constrained_dropdown.dart';
 
 class RegisterSenderScreen extends StatefulWidget {
   const RegisterSenderScreen({Key? key}) : super(key: key);
@@ -491,8 +492,10 @@ class _CompleteDataStep extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           // Gender Dropdown
-          DropdownButtonFormField<Gender>(
+          ConstrainedDropdownButtonFormField<Gender>(
             value: selectedGender,
+            isExpanded: true,
+            menuMaxHeight: 300,
             decoration: InputDecoration(
               labelText: isRTL ? 'النوع' : 'Gender',
               border: OutlineInputBorder(
@@ -502,9 +505,13 @@ class _CompleteDataStep extends StatelessWidget {
             items: Gender.values.map((gender) {
               return DropdownMenuItem<Gender>(
                 value: gender,
-                child: Text(gender == Gender.male 
-                    ? (isRTL ? 'ذكر' : 'Male')
-                    : (isRTL ? 'أنثى' : 'Female')),
+                child: Text(
+                  gender == Gender.male 
+                      ? (isRTL ? 'ذكر' : 'Male')
+                      : (isRTL ? 'أنثى' : 'Female'),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               );
             }).toList(),
             onChanged: (value) {
@@ -513,8 +520,10 @@ class _CompleteDataStep extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           // Sender Type Dropdown
-          DropdownButtonFormField<SenderType>(
+          ConstrainedDropdownButtonFormField<SenderType>(
             value: selectedSenderType,
+            isExpanded: true,
+            menuMaxHeight: 300,
             decoration: InputDecoration(
               labelText: isRTL ? 'نوع المرسل' : 'Sender Type',
               border: OutlineInputBorder(
@@ -539,7 +548,11 @@ class _CompleteDataStep extends StatelessWidget {
               }
               return DropdownMenuItem<SenderType>(
                 value: type,
-                child: Text(label),
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               );
             }).toList(),
             onChanged: (value) {

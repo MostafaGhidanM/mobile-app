@@ -18,6 +18,7 @@ import '../../features/auth/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/constrained_dropdown.dart';
 import 'package:go_router/go_router.dart';
 
 class SendProcessedShipmentScreen extends StatefulWidget {
@@ -35,7 +36,6 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
   final _driverSecondNameController = TextEditingController();
   final _driverThirdNameController = TextEditingController();
   final _palletsController = TextEditingController();
-  final _shipmentNumberController = TextEditingController();
   final _tradeIdController = TextEditingController();
   
   final ShipmentService _shipmentService = ShipmentService();
@@ -75,7 +75,6 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     _driverSecondNameController.dispose();
     _driverThirdNameController.dispose();
     _palletsController.dispose();
-    _shipmentNumberController.dispose();
     _tradeIdController.dispose();
     super.dispose();
   }
@@ -284,6 +283,21 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     setState(() => _isLoading = true);
 
     try {
+      // Fetch next shipment number from backend
+      final nextNumberResponse = await _shipmentService.getNextProcessedMaterialShipmentNumber();
+      if (!nextNumberResponse.isSuccess || nextNumberResponse.data == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(nextNumberResponse.error?.message ?? 'Failed to get next shipment number'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final response = await _shipmentService.createProcessedMaterialShipment(
         shipmentImage: _shipmentImageUrl!,
         materialTypeId: _selectedMaterialType!.id,
@@ -297,9 +311,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
         tradeId: _selectedTrade!.id,
         sentPalletsNumber: int.parse(_palletsController.text),
         dateOfSending: _selectedDate,
-        shipmentNumber: _shipmentNumberController.text.isEmpty 
-            ? null 
-            : _shipmentNumberController.text,
+        shipmentNumber: nextNumberResponse.data,
         receiptFromPress: _receiptImageUrl,
       );
 
@@ -366,8 +378,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       const SizedBox(height: 16),
                       
                       // Material Type
-                      DropdownButtonFormField<WasteType>(
+                      ConstrainedDropdownButtonFormField<WasteType>(
                         value: _selectedMaterialType,
+                        isExpanded: true,
+                        menuMaxHeight: 300,
                         decoration: InputDecoration(
                           labelText: '${localizations.materialType} *',
                           border: OutlineInputBorder(
@@ -377,7 +391,11 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                         items: _materialTypes.map((type) {
                           return DropdownMenuItem(
                             value: type,
-                            child: Text(type.nameAr ?? type.nameEn ?? ''),
+                            child: Text(
+                              type.nameAr ?? type.nameEn ?? '',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -408,8 +426,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       const SizedBox(height: 16),
                       
                       // Car Selection
-                      DropdownButtonFormField<Car>(
+                      ConstrainedDropdownButtonFormField<Car>(
                         value: _selectedCar,
+                        isExpanded: true,
+                        menuMaxHeight: 300,
                         decoration: InputDecoration(
                           labelText: '${localizations.car} *',
                           border: OutlineInputBorder(
@@ -419,7 +439,11 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                         items: _cars.map((car) {
                           return DropdownMenuItem(
                             value: car,
-                            child: Text('${car.carPlate} - ${car.carType?.nameAr ?? car.carType?.nameEn ?? ''}'),
+                            child: Text(
+                              '${car.carPlate} - ${car.carType?.nameAr ?? car.carType?.nameEn ?? ''}',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -501,8 +525,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       
                       // Receiver Unit (SHREDDER and WASHING_LINE only)
                       _factoryUnits.isNotEmpty
-                          ? DropdownButtonFormField<RecyclingUnit>(
+                          ? ConstrainedDropdownButtonFormField<RecyclingUnit>(
                               value: _selectedReceiver,
+                              isExpanded: true,
+                              menuMaxHeight: 300,
                               decoration: InputDecoration(
                                 labelText: '${localizations.receiverUnit} *',
                                 border: OutlineInputBorder(
@@ -512,7 +538,11 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                               items: _factoryUnits.map((unit) {
                                 return DropdownMenuItem(
                                   value: unit,
-                                  child: Text(unit.unitName),
+                                  child: Text(
+                                    unit.unitName,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -537,8 +567,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       
                       // Trade
                       _trades.isNotEmpty
-                          ? DropdownButtonFormField<Trade>(
+                          ? ConstrainedDropdownButtonFormField<Trade>(
                               value: _selectedTrade,
+                              isExpanded: true,
+                              menuMaxHeight: 300,
                               decoration: InputDecoration(
                                 labelText: '${localizations.trade} *',
                                 border: OutlineInputBorder(
@@ -548,7 +580,11 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                               items: _trades.map((trade) {
                                 return DropdownMenuItem(
                                   value: trade,
-                                  child: Text(trade.name),
+                                  child: Text(
+                                    trade.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -613,13 +649,6 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                             '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Shipment Number (optional)
-                      CustomTextField(
-                        controller: _shipmentNumberController,
-                        label: '${localizations.translate('shipment_number')} (${localizations.optional})',
                       ),
                       const SizedBox(height: 16),
                       

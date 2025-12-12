@@ -34,6 +34,15 @@ class ShipmentService {
     );
   }
 
+  Future<ApiResponse<String>> getNextRawMaterialShipmentNumber() async {
+    final response = await _apiClient.get<String>(
+      ApiEndpoints.shipmentsNextNumber,
+      fromJson: (json) => json as String,
+    );
+
+    return response;
+  }
+
   Future<ApiResponse<RawMaterialShipmentReceived>> createShipment({
     required String shipmentImage,
     required String wasteTypeId,
@@ -54,6 +63,15 @@ class ShipmentService {
       },
       fromJson: (json) => RawMaterialShipmentReceived.fromJson(json as Map<String, dynamic>),
     );
+  }
+
+  Future<ApiResponse<String>> getNextProcessedMaterialShipmentNumber() async {
+    final response = await _apiClient.get<String>(
+      ApiEndpoints.processedMaterialShipmentsNextNumber,
+      fromJson: (json) => json as String,
+    );
+
+    return response;
   }
 
   // Processed Material Shipment Methods

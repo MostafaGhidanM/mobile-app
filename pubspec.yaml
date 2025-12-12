@@ -37,6 +37,9 @@ dependencies:
   
   # Utilities
   path_provider: ^2.1.1
+  
+  # Dropdown with width constraints
+  dropdown_button2: ^2.3.9
 
 dev_dependencies:
   flutter_test:
