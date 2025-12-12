@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/recycling_unit_service.dart';
 import '../../core/models/user.dart';
 import '../../core/models/recycling_unit.dart';
 import '../../core/utils/storage.dart';
@@ -39,8 +40,16 @@ class AuthProvider with ChangeNotifier {
         debugPrint('[AuthProvider] Login successful');
         _user = response.data!.user;
         _recyclingUnit = response.data!.recyclingUnit;
+        
+        // If unitType is missing, try to fetch it from the API
+        if (_recyclingUnit != null && _recyclingUnit!.unitType == null) {
+          debugPrint('[AuthProvider] UnitType missing, attempting to fetch unit details...');
+          await _fetchUnitDetails(_recyclingUnit!.id);
+        }
+        
         debugPrint('[AuthProvider] User: $_user');
         debugPrint('[AuthProvider] RecyclingUnit: $_recyclingUnit');
+        debugPrint('[AuthProvider] UnitType: ${_recyclingUnit?.unitType}');
         _isLoading = false;
         notifyListeners();
         return true;
@@ -58,6 +67,27 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<void> _fetchUnitDetails(String unitId) async {
+    try {
+      final recyclingUnitService = RecyclingUnitService();
+      final response = await recyclingUnitService.getRecyclingUnits();
+      
+      if (response.isSuccess && response.data != null) {
+        final unit = response.data!.firstWhere(
+          (u) => u.id == unitId,
+          orElse: () => _recyclingUnit!,
+        );
+        if (unit.unitType != null) {
+          _recyclingUnit = unit;
+          debugPrint('[AuthProvider] Fetched unitType: ${unit.unitType}');
+        }
+      }
+    } catch (e) {
+      debugPrint('[AuthProvider] Error fetching unit details: $e');
+      // Continue without unitType - the app will still work
     }
   }
 

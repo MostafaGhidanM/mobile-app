@@ -20,6 +20,12 @@ class ShipmentCard extends StatelessWidget {
         return isRTL ? 'قيد العمل' : 'In Progress';
       case ShipmentStatus.rejected:
         return isRTL ? 'مغلق' : 'Closed';
+      case ShipmentStatus.sentToFactory:
+        return isRTL ? 'مرسل للمصنع' : 'Sent to Factory';
+      case ShipmentStatus.receivedAtFactory:
+        return isRTL ? 'مستلم في المصنع' : 'Received at Factory';
+      case ShipmentStatus.sentToAdmin:
+        return isRTL ? 'مرسل للإدارة' : 'Sent to Admin';
     }
   }
 
@@ -31,6 +37,12 @@ class ShipmentCard extends StatelessWidget {
         return Colors.blue;
       case ShipmentStatus.rejected:
         return Colors.grey;
+      case ShipmentStatus.sentToFactory:
+        return Colors.cyan;
+      case ShipmentStatus.receivedAtFactory:
+        return Colors.teal;
+      case ShipmentStatus.sentToAdmin:
+        return Colors.purple;
     }
   }
 

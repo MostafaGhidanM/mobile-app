@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../api/api_client.dart';
 import '../api/api_response.dart';
 import '../api/endpoints.dart';
+import '../models/recycling_unit.dart';
 import 'upload_service.dart';
 
 class RecyclingUnitService {
@@ -208,6 +209,85 @@ class RecyclingUnitService {
     }
 
     return response;
+  }
+
+  Future<ApiResponse<List<RecyclingUnit>>> getRecyclingUnits({
+    String? unitType,
+    int page = 1,
+    int pageSize = 100,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'pageSize': pageSize,
+    };
+
+    if (unitType != null) {
+      queryParams['unitType'] = unitType;
+    }
+
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiEndpoints.recyclingUnits,
+      queryParameters: queryParams,
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+
+    if (response.isSuccess && response.data != null) {
+      final data = response.data!;
+      // Handle different response formats:
+      // 1. Paginated: { items: [...], total: X }
+      // 2. Direct array in data: { data: [...] }
+      List<dynamic>? itemsList;
+      if (data.containsKey('items')) {
+        // Paginated response
+        itemsList = data['items'] as List<dynamic>?;
+      } else if (data.containsKey('data')) {
+        // Response with data wrapper
+        final dataField = data['data'];
+        if (dataField is List) {
+          itemsList = dataField;
+        }
+      }
+      
+      final items = itemsList
+              ?.map((item) => RecyclingUnit.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [];
+      return ApiResponse<List<RecyclingUnit>>(
+        success: true,
+        data: items,
+        message: response.message,
+      );
+    }
+
+    return ApiResponse<List<RecyclingUnit>>(
+      success: false,
+      error: response.error,
+      message: response.message,
+    );
+  }
+
+  Future<ApiResponse<RecyclingUnit>> getCurrentUnit() async {
+    // Try to get current unit from auth check endpoint
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/auth/check',
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+
+    // If that doesn't work, we'll need to fetch from recycling units list
+    // For now, return error and let the caller handle it
+    if (response.isSuccess && response.data != null) {
+      // The check endpoint might not return full unit data
+      // We'll need to fetch from the recycling units endpoint with the current unit ID
+      // This is a placeholder - the actual implementation depends on available endpoints
+    }
+
+    return ApiResponse<RecyclingUnit>(
+      success: false,
+      error: ApiError(
+        code: 'NOT_IMPLEMENTED',
+        message: 'Getting current unit details not yet implemented',
+      ),
+    );
   }
 }
 

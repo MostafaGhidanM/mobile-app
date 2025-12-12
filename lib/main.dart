@@ -10,6 +10,9 @@ import 'features/auth/login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/shipments/shipments_list_screen.dart';
 import 'features/shipments/receive_shipment_screen.dart';
+import 'features/shipments/send_processed_shipment_screen.dart';
+import 'features/shipments/receive_processed_shipment_screen.dart';
+import 'features/shipments/processed_shipments_list_screen.dart';
 import 'features/senders/register_sender_screen.dart';
 import 'features/cars/register_car_screen.dart';
 import 'features/settings/settings_screen.dart';
@@ -122,6 +125,18 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/shipments/receive',
       builder: (context, state) => const ReceiveShipmentScreen(),
+    ),
+    GoRoute(
+      path: '/shipments/send-processed',
+      builder: (context, state) => const SendProcessedShipmentScreen(),
+    ),
+    GoRoute(
+      path: '/shipments/receive-processed',
+      builder: (context, state) => const ReceiveProcessedShipmentScreen(),
+    ),
+    GoRoute(
+      path: '/shipments/processed',
+      builder: (context, state) => const ProcessedShipmentsListScreen(),
     ),
     GoRoute(
       path: '/senders/register',

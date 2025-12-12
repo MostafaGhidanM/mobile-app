@@ -19,6 +19,7 @@ class ApiEndpoints {
   // Cars
   static const String cars = '/cars';
   static const String registerCar = '$cars/register';
+  static const String assignedCars = '$cars/assigned';
 
   // Waste Types
   static const String wasteTypes = '/waste-types';
@@ -38,5 +39,16 @@ class ApiEndpoints {
   
   // Recycling Units
   static const String recyclingUnitsRegister = '/recycling-units/register';
+  static const String recyclingUnits = '/recycling-units';
+
+  // Processed Material Shipments
+  static const String processedMaterialShipmentsSent = '/processed-material-shipments-sent';
+  static String processedMaterialShipmentById(String id) => '$processedMaterialShipmentsSent/$id';
+  static String processedMaterialShipmentReceive(String id) => '$processedMaterialShipmentsSent/$id/receive';
+  static const String processedMaterialShipmentsPendingReceipt = '$processedMaterialShipmentsSent/pending-receipt';
+  static const String processedMaterialShipmentsReceived = '$processedMaterialShipmentsSent/received';
+
+  // Trades
+  static const String trades = '/trades';
 }
 

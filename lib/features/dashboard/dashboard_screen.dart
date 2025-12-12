@@ -159,7 +159,7 @@ class DashboardScreen extends StatelessWidget {
                       icon: Icons.upload,
                       label: localizations.sendShipment,
                       onTap: () {
-                        // TODO: Navigate to send shipment
+                        context.push('/shipments/send-processed');
                       },
                     ),
                     _QuickActionCard(

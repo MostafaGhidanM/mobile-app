@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../core/services/shipment_service.dart';
 import '../../core/models/shipment.dart';
+import '../../features/auth/auth_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'shipment_card.dart';
+import 'processed_shipments_list_screen.dart';
 import 'package:go_router/go_router.dart';
 
 class ShipmentsListScreen extends StatefulWidget {
@@ -102,125 +105,182 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     final isRTL = Localizations.localeOf(context).languageCode == 'ar';
+    final authProvider = Provider.of<AuthProvider>(context);
+    final recyclingUnit = authProvider.recyclingUnit;
+    final isPressUnit = recyclingUnit?.isPressUnit() ?? false;
+    final isFactoryUnit = recyclingUnit?.isFactoryUnit() ?? false;
 
     return Directionality(
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(localizations.myShipments),
+      child: DefaultTabController(
+        length: isPressUnit ? 2 : (isFactoryUnit ? 1 : 1),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(localizations.myShipments),
+            bottom: isPressUnit
+                ? TabBar(
+                    tabs: [
+                      const Tab(text: 'Raw Material (Received)'),
+                      const Tab(text: 'Processed Material (Sent)'),
+                    ],
+                  )
+                : null,
+          ),
+          body: isPressUnit
+              ? TabBarView(
+                  children: [
+                    _buildRawMaterialShipmentsView(localizations, isRTL),
+                    _buildProcessedMaterialShipmentsView(localizations, isRTL),
+                  ],
+                )
+              : isFactoryUnit
+                  ? _buildFactoryShipmentsView(localizations, isRTL)
+                  : _buildRawMaterialShipmentsView(localizations, isRTL),
+          bottomNavigationBar: CustomBottomNavBar(
+            currentIndex: 1,
+            onTap: (index) {
+              switch (index) {
+                case 0:
+                  context.go('/dashboard');
+                  break;
+                case 1:
+                  // Already on shipments
+                  break;
+                case 2:
+                  // TODO: Navigate to orders
+                  break;
+                case 3:
+                  context.push('/settings');
+                  break;
+              }
+            },
+            isRTL: isRTL,
+          ),
         ),
-        body: Column(
-          children: [
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: localizations.search,
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.sort),
-                    onPressed: () {
-                      // TODO: Show sort options
-                    },
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {});
-                },
+      ),
+    );
+  }
+
+  Widget _buildRawMaterialShipmentsView(AppLocalizations localizations, bool isRTL) {
+    return Column(
+      children: [
+        // Search Bar
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: localizations.search,
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-            // Filter Tabs
-            Container(
-              height: 50,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _FilterChip(
-                    label: localizations.all,
-                    isSelected: _selectedFilter == 'all',
-                    onTap: () => setState(() => _selectedFilter = 'all'),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: localizations.open,
-                    isSelected: _selectedFilter == 'open',
-                    onTap: () => setState(() => _selectedFilter = 'open'),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: localizations.inProgress,
-                    isSelected: _selectedFilter == 'in_progress',
-                    onTap: () => setState(() => _selectedFilter = 'in_progress'),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: localizations.closed,
-                    isSelected: _selectedFilter == 'closed',
-                    onTap: () => setState(() => _selectedFilter = 'closed'),
-                  ),
-                ],
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
+        ),
+        // Filter Tabs
+        Container(
+          height: 50,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _FilterChip(
+                label: localizations.all,
+                isSelected: _selectedFilter == 'all',
+                onTap: () => setState(() => _selectedFilter = 'all'),
               ),
-            ),
-            const SizedBox(height: 8),
-            // Shipments List
-            Expanded(
-              child: _isLoading && _shipments.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage != null && _shipments.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(_errorMessage!),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () => _loadShipments(refresh: true),
-                                child: Text(localizations.retry),
-                              ),
-                            ],
+              const SizedBox(width: 8),
+              _FilterChip(
+                label: localizations.open,
+                isSelected: _selectedFilter == 'open',
+                onTap: () => setState(() => _selectedFilter = 'open'),
+              ),
+              const SizedBox(width: 8),
+              _FilterChip(
+                label: localizations.inProgress,
+                isSelected: _selectedFilter == 'in_progress',
+                onTap: () => setState(() => _selectedFilter = 'in_progress'),
+              ),
+              const SizedBox(width: 8),
+              _FilterChip(
+                label: localizations.closed,
+                isSelected: _selectedFilter == 'closed',
+                onTap: () => setState(() => _selectedFilter = 'closed'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Shipments List
+        Expanded(
+          child: _isLoading && _shipments.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null && _shipments.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(_errorMessage!),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => _loadShipments(refresh: true),
+                            child: Text(localizations.retry),
                           ),
-                        )
-                      : _filteredShipments.isEmpty
-                          ? Center(child: Text(localizations.noData))
-                          : RefreshIndicator(
-                              onRefresh: () => _loadShipments(refresh: true),
-                              child: ListView.builder(
-                                padding: const EdgeInsets.all(16),
-                                itemCount: _filteredShipments.length + (_hasMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index == _filteredShipments.length) {
-                                    _loadShipments();
-                                    return const Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(16),
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    );
-                                  }
-                                  return ShipmentCard(
-                                    shipment: _filteredShipments[index],
-                                    onTap: () {
-                                      // TODO: Navigate to shipment details
-                                    },
-                                  );
+                        ],
+                      ),
+                    )
+                  : _filteredShipments.isEmpty
+                      ? Center(child: Text(localizations.noData))
+                      : RefreshIndicator(
+                          onRefresh: () => _loadShipments(refresh: true),
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredShipments.length + (_hasMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _filteredShipments.length) {
+                                _loadShipments();
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+                              return ShipmentCard(
+                                shipment: _filteredShipments[index],
+                                onTap: () {
+                                  // TODO: Navigate to shipment details
                                 },
-                              ),
-                            ),
-            ),
-            // Action Buttons
-            Padding(
+                              );
+                            },
+                          ),
+                        ),
+        ),
+        // Action Buttons (show for all recycling units - API will handle authorization)
+        Builder(
+          builder: (context) {
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final hasRecyclingUnit = authProvider.recyclingUnit != null;
+            debugPrint('[ShipmentsListScreen] Building action buttons. Has recycling unit: $hasRecyclingUnit');
+            
+            if (!hasRecyclingUnit) {
+              return const SizedBox.shrink();
+            }
+            
+            return Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => context.push('/shipments/receive'),
+                      onPressed: () {
+                        debugPrint('[ShipmentsListScreen] Receive shipment button pressed');
+                        context.push('/shipments/receive');
+                      },
                       icon: const Icon(Icons.download),
                       label: Text(localizations.receiveShipment),
                       style: ElevatedButton.styleFrom(
@@ -232,7 +292,25 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Navigate to send shipment
+                        debugPrint('[ShipmentsListScreen] Send processed shipment button pressed');
+                        debugPrint('[ShipmentsListScreen] Current route: ${GoRouter.of(context).routerDelegate.currentConfiguration}');
+                        try {
+                          debugPrint('[ShipmentsListScreen] Attempting navigation to /shipments/send-processed');
+                          final router = GoRouter.of(context);
+                          router.push('/shipments/send-processed');
+                          debugPrint('[ShipmentsListScreen] Navigation command sent');
+                        } catch (e, stackTrace) {
+                          debugPrint('[ShipmentsListScreen] Navigation error: $e');
+                          debugPrint('[ShipmentsListScreen] Stack trace: $stackTrace');
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Navigation error: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       },
                       icon: const Icon(Icons.upload),
                       label: Text(localizations.sendShipment),
@@ -243,30 +321,35 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: 1,
-          onTap: (index) {
-            switch (index) {
-              case 0:
-                context.go('/dashboard');
-                break;
-              case 1:
-                // Already on shipments
-                break;
-              case 2:
-                // TODO: Navigate to orders
-                break;
-              case 3:
-                context.push('/settings');
-                break;
-            }
+            );
           },
-          isRTL: isRTL,
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildProcessedMaterialShipmentsView(AppLocalizations localizations, bool isRTL) {
+    return const ProcessedShipmentsListScreen();
+  }
+
+  Widget _buildFactoryShipmentsView(AppLocalizations localizations, bool isRTL) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton.icon(
+            onPressed: () => context.push('/shipments/receive-processed'),
+            icon: const Icon(Icons.download),
+            label: const Text('Receive Processed Material Shipments'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+        const Expanded(
+          child: ProcessedShipmentsListScreen(),
+        ),
+      ],
     );
   }
 }
