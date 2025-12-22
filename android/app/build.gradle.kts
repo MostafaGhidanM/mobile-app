@@ -5,6 +5,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+dependencies {
+    // Google Play Core Library (required for Flutter deferred components)
+    // This is an optional dependency but Flutter references it, so we include it
+    implementation("com.google.android.play:core:1.10.3")
+}
+
 android {
     namespace = "com.example.recycling_unit_app"
     compileSdk = flutter.compileSdkVersion
