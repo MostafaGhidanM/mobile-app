@@ -36,10 +36,22 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             
             // Enable code shrinking and resource shrinking for smaller APK
-            // Note: ProGuard is disabled for now to avoid build issues
-            // You can enable it later for additional size reduction
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+    
+    // Split APKs by ABI to reduce individual APK size
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = false
         }
     }
 }

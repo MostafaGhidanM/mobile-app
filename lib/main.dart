@@ -17,12 +17,41 @@ import 'features/senders/register_sender_screen.dart';
 import 'features/cars/register_car_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/auth/register_unit_screen.dart';
+import 'widgets/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize app
-  runApp(const MyApp());
+  runApp(const AppWithSplash());
+}
+
+class AppWithSplash extends StatefulWidget {
+  const AppWithSplash({Key? key}) : super(key: key);
+
+  @override
+  State<AppWithSplash> createState() => _AppWithSplashState();
+}
+
+class _AppWithSplashState extends State<AppWithSplash> {
+  bool _showSplash = true;
+
+  void _onSplashComplete() {
+    setState(() {
+      _showSplash = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showSplash) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: SplashScreen(onAnimationComplete: _onSplashComplete),
+      );
+    }
+    return const MyApp();
+  }
 }
 
 class MyApp extends StatefulWidget {

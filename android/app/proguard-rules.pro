@@ -6,6 +6,12 @@
 -keep class io.flutter.**  { *; }
 -keep class io.flutter.plugins.**  { *; }
 
+# Optimization settings for smaller size
+-optimizationpasses 5
+-dontusemixedcaseclassnames
+-dontskipnonpubliclibraryclasses
+-verbose
+
 # Gson specific classes
 -keepattributes Signature
 -keepattributes *Annotation*
@@ -54,4 +60,5 @@
     java.lang.Object writeReplace();
     java.lang.Object readResolve();
 }
+
 
