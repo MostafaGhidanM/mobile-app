@@ -42,3 +42,45 @@ workflows:
       #     keystore_password: CM_KEYSTORE_PASSWORD
       #     key_alias: CM_KEY_ALIAS
       #     key_password: CM_KEY_PASSWORD
+
+  ios-workflow:
+    name: iOS Build Workflow
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        # Add your environment variables here if needed
+        # - app_store_credentials
+      vars:
+        # Flutter version (optional, uses default if not specified)
+        # FLUTTER_VERSION: "stable"
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Get Flutter dependencies
+        script: |
+          flutter pub get
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios && pod install && cd ..
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+      - name: Build iOS app
+        script: |
+          flutter build ipa --release
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
+        notify:
+          success: true
+          failure: true
+    code_signing:
+      # Uncomment and configure when you have code signing certificates
+      # - certificate_credential: CM_CERTIFICATE
+      #   provisioning_profile_credential: CM_PROVISIONING_PROFILE

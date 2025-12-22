@@ -97,7 +97,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => AuthProvider()..checkAuthStatus()),
       ],
       child: MaterialApp.router(
-        title: 'Dawar',
+        title: 'Alfa Green',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.getLightTheme(isRTL: _locale.languageCode == 'ar'),
         locale: _locale,
