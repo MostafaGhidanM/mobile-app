@@ -1,0 +1,44 @@
+workflows:
+  android-workflow:
+    name: Android Build Workflow
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        # Add your environment variables here if needed
+        # - keystore_credentials
+      vars:
+        # Android SDK components to install
+        ANDROID_SDK_COMPONENTS: "platforms;android-34,build-tools;34.0.0,platform-tools,ndk;27.0.12077973"
+        # Flutter version (optional, uses default if not specified)
+        # FLUTTER_VERSION: "stable"
+      flutter: stable
+    scripts:
+      - name: Get Flutter dependencies
+        script: |
+          flutter pub get
+      - name: Install Android SDK components
+        script: |
+          # Accept Android SDK licenses
+          yes | sdkmanager --licenses || true
+          # Install specific build tools version (34.0.0 is more stable than 35.0.0)
+          sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools"
+    artifacts:
+      - build/app/outputs/**/*.apk
+      - build/app/outputs/**/*.aab
+      - build/app/outputs/**/mapping.txt
+      - build/app/outputs/**/symbols/**
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
+        notify:
+          success: true
+          failure: true
+    android_signing:
+      # Uncomment and configure when you have signing keys
+      # - keystore_reference:
+      #     variable: CM_KEYSTORE_PATH
+      #     keystore_password: CM_KEYSTORE_PASSWORD
+      #     key_alias: CM_KEY_ALIAS
+      #     key_password: CM_KEY_PASSWORD
