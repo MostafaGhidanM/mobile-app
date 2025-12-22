@@ -71,6 +71,7 @@ workflows:
           flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/**/symbols/**
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
     publishing:
