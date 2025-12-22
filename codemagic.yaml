@@ -66,8 +66,16 @@ workflows:
       - name: Build iOS app (.app bundle - no code signing required)
         script: |
           flutter build ios --release --no-codesign
+      - name: Package .app as .ipa structure
+        script: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r Runner.ipa Payload
+          rm -rf Payload
     artifacts:
       - build/ios/iphoneos/Runner.app
+      - build/ios/iphoneos/Runner.ipa
       - build/ios/**/symbols/**
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
