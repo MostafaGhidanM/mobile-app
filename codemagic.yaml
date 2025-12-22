@@ -63,14 +63,11 @@ workflows:
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install && cd ..
-      - name: Set up code signing settings on Xcode project
+      - name: Build iOS app (.app bundle - no code signing required)
         script: |
-          xcode-project use-profiles
-      - name: Build iOS app
-        script: |
-          flutter build ipa --release
+          flutter build ios --release --no-codesign
     artifacts:
-      - build/ios/ipa/*.ipa
+      - build/ios/iphoneos/Runner.app
       - build/ios/**/symbols/**
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
