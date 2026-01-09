@@ -3,14 +3,17 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
 
 class ImagePickerWidget extends StatelessWidget {
   final String? imagePath;
   final Uint8List? imageBytes;
   final String label;
   final Function(dynamic) onImagePicked; // Can be File or Uint8List
+  final Function(Map<String, double>)? onLocationCaptured; // Optional location callback
   final IconData icon;
   final String? helperText;
+  final bool captureLocation; // Whether to automatically capture location
 
   const ImagePickerWidget({
     Key? key,
@@ -18,11 +21,52 @@ class ImagePickerWidget extends StatelessWidget {
     this.imageBytes,
     required this.label,
     required this.onImagePicked,
+    this.onLocationCaptured,
     this.icon = Icons.camera_alt,
     this.helperText,
+    this.captureLocation = false,
   }) : super(key: key);
 
   Future<void> _pickImage(BuildContext context) async {
+    // Capture location first if enabled
+    Map<String, double>? location;
+    if (captureLocation && !kIsWeb) {
+      try {
+        // Check if location services are enabled
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (serviceEnabled) {
+          // Check location permissions
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+          }
+          
+          if (permission == LocationPermission.whileInUse || 
+              permission == LocationPermission.always) {
+            try {
+              Position position = await Geolocator.getCurrentPosition(
+                desiredAccuracy: LocationAccuracy.high,
+                timeLimit: const Duration(seconds: 5),
+              );
+              location = {
+                'lat': position.latitude,
+                'lng': position.longitude,
+              };
+              if (onLocationCaptured != null) {
+                onLocationCaptured!(location!);
+              }
+            } catch (e) {
+              debugPrint('[ImagePickerWidget] Error capturing location: $e');
+              // Continue without location if capture fails
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[ImagePickerWidget] Error checking location permissions: $e');
+        // Continue without location if there's an error
+      }
+    }
+
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(
       source: ImageSource.camera,

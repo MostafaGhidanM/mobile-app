@@ -60,6 +60,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
   bool _isLoadingData = true;
+  Map<String, double>? _shipmentLocation;
 
   @override
   void initState() {
@@ -373,6 +374,12 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       ImagePickerWidget(
                         label: '${localizations.translate('shipment_image')} *',
                         imagePath: _shipmentImagePath,
+                        captureLocation: true,
+                        onLocationCaptured: (location) {
+                          setState(() {
+                            _shipmentLocation = location;
+                          });
+                        },
                         onImagePicked: _uploadShipmentImage,
                       ),
                       const SizedBox(height: 16),

@@ -15,7 +15,6 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
 import '../../widgets/constrained_dropdown.dart';
 import 'package:go_router/go_router.dart';
-import 'package:geolocator/geolocator.dart';
 
 class ReceiveShipmentScreen extends StatefulWidget {
   const ReceiveShipmentScreen({Key? key}) : super(key: key);
@@ -44,7 +43,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
   bool _isLoading = false;
   bool _isLoadingData = true;
   Map<String, double>? _shipmentLocation;
-  bool _isGettingLocation = false;
 
   @override
   void initState() {
@@ -156,91 +154,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
         );
       }
       setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isGettingLocation = true);
-    
-    try {
-      // Check if location services are enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please enable location services'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        setState(() => _isGettingLocation = false);
-        return;
-      }
-
-      // Check location permissions
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Location permissions are denied'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          setState(() => _isGettingLocation = false);
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location permissions are permanently denied'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        setState(() => _isGettingLocation = false);
-        return;
-      }
-
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      setState(() {
-        _shipmentLocation = {
-          'lat': position.latitude,
-          'lng': position.longitude,
-        };
-        _isGettingLocation = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location captured successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('[ReceiveShipmentScreen] Error getting location: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to get location: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      setState(() => _isGettingLocation = false);
     }
   }
 
@@ -398,6 +311,12 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                       ImagePickerWidget(
                         imagePath: _shipmentImagePath,
                         label: localizations.translate('shipment_image'),
+                        captureLocation: true,
+                        onLocationCaptured: (location) {
+                          setState(() {
+                            _shipmentLocation = location;
+                          });
+                        },
                         onImagePicked: (fileOrBytes) async {
                           setState(() {
                             if (kIsWeb && fileOrBytes is Uint8List) {
@@ -525,38 +444,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                           foregroundColor: Theme.of(context).colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      // Location Capture Button
-                      OutlinedButton.icon(
-                        onPressed: _isGettingLocation ? null : _getCurrentLocation,
-                        icon: _isGettingLocation
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : Icon(_shipmentLocation != null ? Icons.check_circle : Icons.location_on),
-                        label: Text(
-                          _shipmentLocation != null
-                              ? (localizations.translate('location_captured') ?? 'Location Captured')
-                              : (localizations.translate('capture_shipment_location') ?? 'Capture Shipment Location'),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _shipmentLocation != null
-                              ? Colors.green
-                              : Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      if (_shipmentLocation != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          '${localizations.translate('location') ?? 'Location:'} ${_shipmentLocation!['lat']!.toStringAsFixed(6)}, ${_shipmentLocation!['lng']!.toStringAsFixed(6)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
                       const SizedBox(height: 32),
                       // Submit Button
                       CustomButton(
