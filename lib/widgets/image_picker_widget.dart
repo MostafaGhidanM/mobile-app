@@ -34,11 +34,26 @@ class ImagePickerWidget extends StatelessWidget {
       try {
         // Check if location services are enabled
         bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          // Force open location settings
+          await Geolocator.openLocationSettings();
+          // Wait a bit and check again
+          await Future.delayed(const Duration(milliseconds: 500));
+          serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        }
+
         if (serviceEnabled) {
           // Check location permissions
           LocationPermission permission = await Geolocator.checkPermission();
           if (permission == LocationPermission.denied) {
             permission = await Geolocator.requestPermission();
+          }
+          
+          if (permission == LocationPermission.deniedForever) {
+            // Open app settings to enable location permission
+            await Geolocator.openAppSettings();
+            await Future.delayed(const Duration(milliseconds: 500));
+            permission = await Geolocator.checkPermission();
           }
           
           if (permission == LocationPermission.whileInUse || 
