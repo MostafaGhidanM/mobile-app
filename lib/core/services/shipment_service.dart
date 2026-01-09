@@ -50,6 +50,7 @@ class ShipmentService {
     required String senderId,
     String? shipmentNumber,
     String? receiptImage,
+    Map<String, double>? geoLocation,
   }) async {
     return await _apiClient.post<RawMaterialShipmentReceived>(
       ApiEndpoints.shipments,
@@ -60,6 +61,7 @@ class ShipmentService {
         'senderId': senderId,
         if (shipmentNumber != null) 'shipmentNumber': shipmentNumber,
         if (receiptImage != null) 'receiptImage': receiptImage,
+        if (geoLocation != null) 'geoLocation': geoLocation,
       },
       fromJson: (json) => RawMaterialShipmentReceived.fromJson(json as Map<String, dynamic>),
     );

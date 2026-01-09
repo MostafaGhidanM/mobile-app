@@ -11,6 +11,7 @@ import '../../core/services/recycling_unit_service.dart';
 import '../../core/services/waste_type_service.dart';
 import '../../core/models/waste_type.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
 
 class RegisterUnitScreen extends StatefulWidget {
   const RegisterUnitScreen({Key? key}) : super(key: key);
@@ -55,6 +56,8 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
   bool _isLoading = false;
   bool _isLoadingWasteTypes = true;
   bool _isRTL = false;
+  Map<String, double>? _geoLocation;
+  bool _isGettingLocation = false;
 
   @override
   void initState() {
@@ -81,6 +84,91 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
     _machinesCountController.dispose();
     _stationCapacityController.dispose();
     super.dispose();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isGettingLocation = true);
+    
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_isRTL ? 'يرجى تفعيل خدمات الموقع' : 'Please enable location services'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isGettingLocation = false);
+        return;
+      }
+
+      // Check location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_isRTL ? 'تم رفض إذن الموقع' : 'Location permissions are denied'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isGettingLocation = false);
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_isRTL ? 'يجب تفعيل إذن الموقع من الإعدادات' : 'Location permissions are permanently denied'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isGettingLocation = false);
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _geoLocation = {
+          'lat': position.latitude,
+          'lng': position.longitude,
+        };
+        _isGettingLocation = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isRTL ? 'تم الحصول على الموقع بنجاح' : 'Location captured successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[RegisterUnitScreen] Error getting location: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isRTL ? 'فشل الحصول على الموقع' : 'Failed to get location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => _isGettingLocation = false);
+    }
   }
 
   Future<void> _loadWasteTypes() async {
@@ -192,6 +280,7 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
       commercialRegisterBytes: kIsWeb ? _commercialRegisterBytes : null,
       taxCardFile: kIsWeb ? null : _taxCard,
       taxCardBytes: kIsWeb ? _taxCardBytes : null,
+      geoLocation: _geoLocation,
     );
 
     setState(() {
@@ -413,6 +502,38 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
                       return null;
                     },
                   ),
+                  const SizedBox(height: 16),
+                  // Location Capture Button
+                  OutlinedButton.icon(
+                    onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                    icon: _isGettingLocation
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(_geoLocation != null ? Icons.check_circle : Icons.location_on),
+                    label: Text(
+                      _geoLocation != null
+                          ? (isRTL ? 'تم الحصول على الموقع' : 'Location Captured')
+                          : (isRTL ? 'الحصول على موقع الوحدة' : 'Capture Unit Location'),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _geoLocation != null
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  if (_geoLocation != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '${isRTL ? 'الموقع:' : 'Location:'} ${_geoLocation!['lat']!.toStringAsFixed(6)}, ${_geoLocation!['lng']!.toStringAsFixed(6)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   
                   // Waste Type Dropdown

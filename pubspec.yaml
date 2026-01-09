@@ -40,6 +40,9 @@ dependencies:
   
   # Dropdown with width constraints
   dropdown_button2: ^2.3.9
+  
+  # Location
+  geolocator: ^11.0.0
 
 dev_dependencies:
   flutter_test:

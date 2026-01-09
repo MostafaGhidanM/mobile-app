@@ -14,6 +14,8 @@ import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
 import '../../widgets/constrained_dropdown.dart';
+import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
 
 class ReceiveShipmentScreen extends StatefulWidget {
   const ReceiveShipmentScreen({Key? key}) : super(key: key);
@@ -33,12 +35,16 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
 
   String? _shipmentImagePath;
   String? _shipmentImageUrl;
+  String? _receiptImagePath;
+  String? _receiptImageUrl;
   WasteType? _selectedWasteType;
   Sender? _selectedSender;
   List<WasteType> _wasteTypes = [];
   List<Sender> _senders = [];
   bool _isLoading = false;
   bool _isLoadingData = true;
+  Map<String, double>? _shipmentLocation;
+  bool _isGettingLocation = false;
 
   @override
   void initState() {
@@ -153,6 +159,126 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
     }
   }
 
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isGettingLocation = true);
+    
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enable location services'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isGettingLocation = false);
+        return;
+      }
+
+      // Check location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Location permissions are denied'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isGettingLocation = false);
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permissions are permanently denied'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isGettingLocation = false);
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _shipmentLocation = {
+          'lat': position.latitude,
+          'lng': position.longitude,
+        };
+        _isGettingLocation = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location captured successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[ReceiveShipmentScreen] Error getting location: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to get location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => _isGettingLocation = false);
+    }
+  }
+
+  Future<void> _uploadReceiptImage(dynamic imageData) async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final response = await _uploadService.uploadImage(imageData);
+      
+      if (response.isSuccess && response.data != null) {
+        setState(() {
+          _receiptImageUrl = response.data!.url;
+          _isLoading = false;
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.error?.message ?? 'Failed to upload receipt image'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading receipt image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -212,6 +338,8 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
         weight: double.parse(_weightController.text),
         senderId: _selectedSender!.id,
         shipmentNumber: nextNumberResponse.data,
+        receiptImage: _receiptImageUrl,
+        geoLocation: _shipmentLocation,
       );
 
       if (response.isSuccess && mounted) {
@@ -315,6 +443,24 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 24),
+                      // Receipt Image
+                      ImagePickerWidget(
+                        imagePath: _receiptImagePath,
+                        label: localizations.translate('receipt_image') ?? 'Receipt Image',
+                        onImagePicked: (fileOrBytes) async {
+                          setState(() {
+                            if (kIsWeb && fileOrBytes is Uint8List) {
+                              // Store bytes for web
+                            } else if (!kIsWeb && fileOrBytes is File) {
+                              _receiptImagePath = fileOrBytes.path;
+                            }
+                          });
+                          await _uploadReceiptImage(fileOrBytes);
+                        },
+                        icon: Icons.receipt,
+                        helperText: localizations.translate('max_file_size'),
+                      ),
                       const SizedBox(height: 20),
                       // Weight Input
                       CustomTextField(
@@ -368,10 +514,7 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                       // Register New Sender Button
                       OutlinedButton.icon(
                         onPressed: () async {
-                          final result = await Navigator.pushNamed(
-                            context,
-                            '/senders/register',
-                          );
+                          final result = await context.push('/senders/register');
                           if (result == true) {
                             _loadData();
                           }
@@ -382,6 +525,38 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                           foregroundColor: Theme.of(context).colorScheme.primary,
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      // Location Capture Button
+                      OutlinedButton.icon(
+                        onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                        icon: _isGettingLocation
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(_shipmentLocation != null ? Icons.check_circle : Icons.location_on),
+                        label: Text(
+                          _shipmentLocation != null
+                              ? (localizations.translate('location_captured') ?? 'Location Captured')
+                              : (localizations.translate('capture_shipment_location') ?? 'Capture Shipment Location'),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _shipmentLocation != null
+                              ? Colors.green
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      if (_shipmentLocation != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          '${localizations.translate('location') ?? 'Location:'} ${_shipmentLocation!['lat']!.toStringAsFixed(6)}, ${_shipmentLocation!['lng']!.toStringAsFixed(6)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 32),
                       // Submit Button
                       CustomButton(

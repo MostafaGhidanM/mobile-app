@@ -10,6 +10,7 @@ import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
 import '../../widgets/constrained_dropdown.dart';
+import '../../widgets/car_plate_input.dart';
 
 class RegisterCarScreen extends StatefulWidget {
   const RegisterCarScreen({Key? key}) : super(key: key);
@@ -25,6 +26,7 @@ class _RegisterCarScreenState extends State<RegisterCarScreen> {
 
   final _carPlateController = TextEditingController();
   final _maximumCapacityController = TextEditingController();
+  String _carPlateValue = '';
 
   final CarService _carService = CarService();
   final UploadService _uploadService = UploadService();
@@ -137,7 +139,7 @@ class _RegisterCarScreenState extends State<RegisterCarScreen> {
         _licenceBackImageUrl == null ||
         _selectedCarBrand == null ||
         _selectedCarType == null ||
-        _carPlateController.text.trim().isEmpty ||
+        _carPlateValue.trim().isEmpty ||
         _maximumCapacityController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -159,7 +161,7 @@ class _RegisterCarScreenState extends State<RegisterCarScreen> {
         carBrandId: _selectedCarBrand!.id,
         licenceFrontImage: _licenceFrontImageUrl!,
         licenceBackImage: _licenceBackImageUrl!,
-        carPlate: _carPlateController.text.trim(),
+        carPlate: _carPlateValue.trim(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -276,7 +278,13 @@ class _RegisterCarScreenState extends State<RegisterCarScreen> {
                     },
                   ),
                   _CompleteDataStep(
-                    carPlateController: _carPlateController,
+                    carPlateValue: _carPlateValue,
+                    onCarPlateChanged: (value) {
+                      setState(() {
+                        _carPlateValue = value;
+                        _carPlateController.text = value;
+                      });
+                    },
                     maximumCapacityController: _maximumCapacityController,
                     licenceFrontImagePath: _licenceFrontImagePath,
                     licenceBackImagePath: _licenceBackImagePath,
@@ -549,7 +557,8 @@ class _InstructionItem extends StatelessWidget {
 }
 
 class _CompleteDataStep extends StatelessWidget {
-  final TextEditingController carPlateController;
+  final String carPlateValue;
+  final ValueChanged<String> onCarPlateChanged;
   final TextEditingController maximumCapacityController;
   final String? licenceFrontImagePath;
   final String? licenceBackImagePath;
@@ -567,7 +576,8 @@ class _CompleteDataStep extends StatelessWidget {
   final bool isLoading;
 
   const _CompleteDataStep({
-    required this.carPlateController,
+    required this.carPlateValue,
+    required this.onCarPlateChanged,
     required this.maximumCapacityController,
     required this.licenceFrontImagePath,
     required this.licenceBackImagePath,
@@ -595,9 +605,11 @@ class _CompleteDataStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CustomTextField(
+          CarPlateInput(
             label: localizations.translate('plate_number'),
-            controller: carPlateController,
+            value: carPlateValue,
+            onChanged: onCarPlateChanged,
+            required: true,
           ),
           const SizedBox(height: 20),
           CustomTextField(

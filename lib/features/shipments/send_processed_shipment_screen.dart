@@ -440,7 +440,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                           return DropdownMenuItem(
                             value: car,
                             child: Text(
-                              '${car.carPlate} - ${car.carType?.nameAr ?? car.carType?.nameEn ?? ''}',
+                              car.carPlate,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
