@@ -44,6 +44,11 @@ class AuthService {
             AppConstants.userDataKey,
             loginData.recyclingUnit!.toJson(),
           );
+          // Store phoneNumber separately for background notification tasks
+          await StorageService.setString(
+            'phoneNumber',
+            loginData.recyclingUnit!.phoneNumber,
+          );
         }
       }
       
@@ -65,6 +70,7 @@ class AuthService {
     await _apiClient.clearToken();
     await StorageService.remove(AppConstants.accessTokenKey);
     await StorageService.remove(AppConstants.userDataKey);
+    await StorageService.remove('phoneNumber');
   }
 
   Future<String?> getStoredToken() async {

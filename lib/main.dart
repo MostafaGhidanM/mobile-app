@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:developer' as developer;
 import 'core/theme/app_theme.dart';
 import 'core/utils/constants.dart';
 import 'localization/app_localizations.dart';
@@ -17,6 +18,8 @@ import 'features/senders/register_sender_screen.dart';
 import 'features/cars/register_car_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/auth/register_unit_screen.dart';
+import 'features/notifications/notifications_screen.dart';
+import 'core/services/push_notification_service.dart';
 import 'widgets/splash_screen.dart';
 
 void main() async {
@@ -74,6 +77,17 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadSavedLocale();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    try {
+      await PushNotificationService.initialize();
+      // Start foreground polling when app is in foreground
+      PushNotificationService.startForegroundPolling();
+    } catch (e) {
+      debugPrint('Failed to initialize notifications: $e');
+    }
   }
 
   Future<void> _loadSavedLocale() async {
@@ -182,6 +196,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/register-unit',
       builder: (context, state) => const RegisterUnitScreen(),
+    ),
+    GoRoute(
+      path: '/notifications',
+      builder: (context, state) => const NotificationsScreen(),
     ),
   ],
 );

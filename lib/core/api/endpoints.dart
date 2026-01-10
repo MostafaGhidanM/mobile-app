@@ -52,5 +52,11 @@ class ApiEndpoints {
 
   // Trades
   static const String trades = '/trades';
+
+  // Notifications
+  static const String notifications = '/notifications';
+  static String notificationById(String id) => '$notifications/$id';
+  static String notificationMarkRead(String id) => '$notifications/$id/mark-read';
+  static const String notificationsUnreadCount = '$notifications/unread-count';
 }
 

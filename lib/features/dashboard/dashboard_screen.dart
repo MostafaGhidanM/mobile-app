@@ -4,6 +4,7 @@ import '../../localization/app_localizations.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../widgets/notification_badge.dart';
 import 'package:go_router/go_router.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -35,11 +36,16 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications),
-              onPressed: () {
-                // TODO: Show notifications
+            NotificationBadge(
+              onTap: () {
+                context.push('/notifications');
               },
+              child: IconButton(
+                icon: const Icon(Icons.notifications),
+                onPressed: () {
+                  context.push('/notifications');
+                },
+              ),
             ),
           ],
         ),
