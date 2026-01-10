@@ -9,6 +9,9 @@ dependencies {
     // Google Play Core Library (required for Flutter deferred components)
     // This is an optional dependency but Flutter references it, so we include it
     implementation("com.google.android.play:core:1.10.3")
+    
+    // Core library desugaring (required for flutter_local_notifications)
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
 
 android {
@@ -18,6 +21,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
