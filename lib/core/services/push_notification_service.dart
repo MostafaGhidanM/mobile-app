@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:workmanager/workmanager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
@@ -9,15 +9,19 @@ import '../models/notification.dart' as models;
 
 class PushNotificationService {
   static const String _lastNotificationIdKey = 'last_notification_id';
-  static const String _backgroundTaskName = 'checkNotifications';
+  static PushNotificationService? _instance;
+  static PushNotificationService get instance => _instance ??= PushNotificationService._();
   
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   final NotificationService _notificationService = NotificationService();
+  Timer? _foregroundPollTimer;
+  
+  PushNotificationService._();
   
   static Future<void> initialize() async {
-    final service = PushNotificationService();
+    final service = PushNotificationService.instance;
     await service._initializeLocalNotifications();
-    await service._initializeWorkmanager();
+    service._startForegroundPolling();
   }
 
   Future<void> _initializeLocalNotifications() async {
@@ -53,21 +57,19 @@ class PushNotificationService {
     // This is handled in the app's navigation logic
   }
 
-  Future<void> _initializeWorkmanager() async {
-    await Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: kDebugMode,
-    );
-    
-    // Register periodic task (runs every 15 minutes minimum)
-    await Workmanager().registerPeriodicTask(
-      _backgroundTaskName,
-      _backgroundTaskName,
-      frequency: const Duration(minutes: 15),
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-      ),
-    );
+  void _startForegroundPolling() {
+    // Poll every 30 seconds when app is in foreground
+    // For background, we rely on the app resuming and checking immediately
+    _foregroundPollTimer?.cancel();
+    final service = this;
+    _foregroundPollTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      service.checkForNewNotifications();
+    });
+  }
+
+  void stopPolling() {
+    _foregroundPollTimer?.cancel();
+    _foregroundPollTimer = null;
   }
 
   Future<void> checkForNewNotifications({bool showNotification = true}) async {
@@ -161,34 +163,10 @@ class PushNotificationService {
     );
   }
 
-  // Foreground polling - called from app when in foreground
-  static void startForegroundPolling() {
-    final service = PushNotificationService();
-    // Poll every 30 seconds when app is in foreground
-    Future.delayed(const Duration(seconds: 30), () {
-      service.checkForNewNotifications();
-      startForegroundPolling();
-    });
+  // Called when app comes to foreground to check for new notifications immediately
+  static Future<void> checkOnAppResume() async {
+    final service = PushNotificationService.instance;
+    await service.checkForNewNotifications();
   }
-
-  Future<void> stopPolling() async {
-    await Workmanager().cancelByUniqueName(_backgroundTaskName);
-  }
-}
-
-// Background task callback - must be top-level function
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    debugPrint('Background task started: $task');
-    
-    if (task == 'checkNotifications') {
-      final service = PushNotificationService();
-      await service.checkForNewNotifications(showNotification: true);
-      return Future.value(true);
-    }
-    
-    return Future.value(false);
-  });
 }
 

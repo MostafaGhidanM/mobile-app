@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -64,7 +65,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Locale _locale = const Locale('ar'); // Default to Arabic
 
   void _setLocale(Locale locale) {
@@ -76,15 +77,31 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadSavedLocale();
     _initializeNotifications();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Check for notifications when app comes to foreground
+    if (state == AppLifecycleState.resumed) {
+      PushNotificationService.checkOnAppResume();
+    }
   }
 
   Future<void> _initializeNotifications() async {
     try {
       await PushNotificationService.initialize();
-      // Start foreground polling when app is in foreground
-      PushNotificationService.startForegroundPolling();
+      // Foreground polling is handled internally by PushNotificationService
+      // Also checks when app resumes from background
     } catch (e) {
       debugPrint('Failed to initialize notifications: $e');
     }
