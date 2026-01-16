@@ -135,7 +135,13 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                 )
               : isFactoryUnit
                   ? _buildFactoryShipmentsView(localizations, isRTL)
-                  : _buildRawMaterialShipmentsView(localizations, isRTL),
+                  : Center(
+                      child: Text(
+                        isRTL 
+                          ? 'لا توجد شحنات متاحة لوحدتك'
+                          : 'No shipments available for your unit type',
+                      ),
+                    ),
           bottomNavigationBar: CustomBottomNavBar(
             currentIndex: 1,
             onTap: (index) {
@@ -260,14 +266,14 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                           ),
                         ),
         ),
-        // Action Buttons (show for all recycling units - API will handle authorization)
+        // Action Buttons (only show for PRESS units)
         Builder(
           builder: (context) {
             final authProvider = Provider.of<AuthProvider>(context, listen: false);
-            final hasRecyclingUnit = authProvider.recyclingUnit != null;
-            debugPrint('[ShipmentsListScreen] Building action buttons. Has recycling unit: $hasRecyclingUnit');
+            final recyclingUnit = authProvider.recyclingUnit;
+            final isPressUnit = recyclingUnit?.isPressUnit() ?? false;
             
-            if (!hasRecyclingUnit) {
+            if (!isPressUnit) {
               return const SizedBox.shrink();
             }
             
@@ -278,7 +284,6 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        debugPrint('[ShipmentsListScreen] Receive shipment button pressed');
                         context.push('/shipments/receive');
                       },
                       icon: const Icon(Icons.download),
@@ -292,25 +297,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        debugPrint('[ShipmentsListScreen] Send processed shipment button pressed');
-                        debugPrint('[ShipmentsListScreen] Current route: ${GoRouter.of(context).routerDelegate.currentConfiguration}');
-                        try {
-                          debugPrint('[ShipmentsListScreen] Attempting navigation to /shipments/send-processed');
-                          final router = GoRouter.of(context);
-                          router.push('/shipments/send-processed');
-                          debugPrint('[ShipmentsListScreen] Navigation command sent');
-                        } catch (e, stackTrace) {
-                          debugPrint('[ShipmentsListScreen] Navigation error: $e');
-                          debugPrint('[ShipmentsListScreen] Stack trace: $stackTrace');
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Navigation error: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
+                        context.push('/shipments/send-processed');
                       },
                       icon: const Icon(Icons.upload),
                       label: Text(localizations.sendShipment),

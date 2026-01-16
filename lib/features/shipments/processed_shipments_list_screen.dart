@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../core/services/shipment_service.dart';
 import '../../core/models/shipment.dart';
+import '../../core/api/api_response.dart';
+import '../../features/auth/auth_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'processed_shipment_card.dart';
 import 'package:go_router/go_router.dart';
@@ -50,11 +53,39 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
     });
 
     try {
-      final response = await _shipmentService.listProcessedMaterialShipments(
-        page: _currentPage,
-        pageSize: 20,
-        status: _selectedFilter != 'all' ? _getStatusString(_selectedFilter) : null,
-      );
+      // Check if this is a factory unit (shredder/washline)
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final recyclingUnit = authProvider.recyclingUnit;
+      final isFactoryUnit = recyclingUnit?.isFactoryUnit() ?? false;
+
+      ApiResponse<ProcessedMaterialShipmentListResponse> response;
+      
+      if (isFactoryUnit) {
+        // Factory units should use pending-receipt endpoint to see shipments sent to them
+        final pendingResponse = await _shipmentService.getPendingReceiptShipments();
+        if (pendingResponse.isSuccess && pendingResponse.data != null) {
+          // Convert to list response format
+          response = ApiResponse<ProcessedMaterialShipmentListResponse>(
+            success: true,
+            data: ProcessedMaterialShipmentListResponse(
+              items: pendingResponse.data!,
+              total: pendingResponse.data!.length,
+            ),
+          );
+        } else {
+          response = ApiResponse<ProcessedMaterialShipmentListResponse>(
+            success: false,
+            error: pendingResponse.error,
+          );
+        }
+      } else {
+        // Press units use regular list endpoint
+        response = await _shipmentService.listProcessedMaterialShipments(
+          page: _currentPage,
+          pageSize: 20,
+          status: _selectedFilter != 'all' ? _getStatusString(_selectedFilter) : null,
+        );
+      }
 
       if (response.isSuccess && response.data != null) {
         setState(() {
@@ -63,8 +94,11 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
           } else {
             _shipments.addAll(response.data!.items);
           }
-          _hasMore = response.data!.items.length == 20;
-          _currentPage++;
+          // For factory units using pending-receipt, pagination doesn't apply
+          _hasMore = isFactoryUnit ? false : response.data!.items.length == 20;
+          if (!isFactoryUnit) {
+            _currentPage++;
+          }
           _isLoading = false;
         });
       } else {

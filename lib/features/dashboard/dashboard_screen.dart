@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../features/auth/auth_provider.dart';
@@ -38,16 +39,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       try {
         final creditResponse = await _recyclingUnitService.getCredit();
         if (creditResponse.isSuccess && creditResponse.data != null) {
+          final creditValue = creditResponse.data!['credit'];
           setState(() {
-            _credit = (creditResponse.data!['credit'] as num?)?.toDouble() ?? 0.0;
+            _credit = creditValue != null ? (creditValue as num).toDouble() : 0.0;
             _loadingCredit = false;
           });
         } else {
-          setState(() => _loadingCredit = false);
+          // If API call fails, set credit to 0
+          setState(() {
+            _credit = 0.0;
+            _loadingCredit = false;
+          });
         }
       } catch (e) {
-        setState(() => _loadingCredit = false);
+        debugPrint('Error loading credit: $e');
+        setState(() {
+          _credit = 0.0;
+          _loadingCredit = false;
+        });
       }
+    } else {
+      // Not a PRESS unit, no credit
+      _credit = null;
     }
   }
 
@@ -205,23 +218,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                   children: [
-                    _QuickActionCard(
-                      icon: Icons.download,
-                      label: localizations.receiveShipment,
-                      onTap: () => context.push('/shipments/receive'),
-                    ),
-                    _QuickActionCard(
-                      icon: Icons.upload,
-                      label: localizations.sendShipment,
-                      onTap: () {
-                        context.push('/shipments/send-processed');
-                      },
-                    ),
+                    // PRESS units: Receive Raw Shipment
+                    if (unit?.unitType == UnitType.press)
+                      _QuickActionCard(
+                        icon: Icons.download,
+                        label: localizations.receiveShipment,
+                        onTap: () => context.push('/shipments/receive'),
+                      ),
+                    // PRESS units: Send Processed Shipment
+                    if (unit?.unitType == UnitType.press)
+                      _QuickActionCard(
+                        icon: Icons.upload,
+                        label: localizations.sendShipment,
+                        onTap: () {
+                          context.push('/shipments/send-processed');
+                        },
+                      ),
+                    // Factory units: Receive Processed Shipment
+                    if (unit?.unitType == UnitType.shredder || unit?.unitType == UnitType.washingLine)
+                      _QuickActionCard(
+                        icon: Icons.download,
+                        label: isRTL ? 'استلام شحنة معالجة' : 'Receive Processed Shipment',
+                        onTap: () => context.push('/shipments/receive-processed'),
+                      ),
+                    // All units: View Shipments
                     _QuickActionCard(
                       icon: Icons.visibility,
                       label: localizations.viewShipment,
                       onTap: () => context.push('/shipments'),
                     ),
+                    // All units: Supply Requests (if needed)
                     _QuickActionCard(
                       icon: Icons.assignment,
                       label: localizations.supplyRequests,
@@ -229,16 +255,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         // TODO: Navigate to supply requests
                       },
                     ),
+                    // All units: Register Vehicle
                     _QuickActionCard(
                       icon: Icons.directions_car,
                       label: localizations.registerVehicle,
                       onTap: () => context.push('/cars/register'),
                     ),
-                    _QuickActionCard(
-                      icon: Icons.person_add,
-                      label: localizations.registerSender,
-                      onTap: () => context.push('/senders/register'),
-                    ),
+                    // PRESS units: Register Sender
+                    if (unit?.unitType == UnitType.press)
+                      _QuickActionCard(
+                        icon: Icons.person_add,
+                        label: localizations.registerSender,
+                        onTap: () => context.push('/senders/register'),
+                      ),
                   ],
                 ),
               ),
