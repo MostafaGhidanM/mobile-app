@@ -103,7 +103,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // Foreground polling is handled internally by PushNotificationService
       // Also checks when app resumes from background
     } catch (e) {
-      debugPrint('Failed to initialize notifications: $e');
+      // Ignore errors
     }
   }
 

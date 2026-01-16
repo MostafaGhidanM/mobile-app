@@ -60,31 +60,16 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
     setState(() => _isLoadingData = true);
     
     try {
-      debugPrint('[ReceiveShipmentScreen] Loading waste types...');
       final wasteTypesResponse = await _wasteTypeService.getWasteTypes();
-      debugPrint('[ReceiveShipmentScreen] Waste types response: ${wasteTypesResponse.isSuccess}');
-      debugPrint('[ReceiveShipmentScreen] Waste types data: ${wasteTypesResponse.data?.length ?? 0}');
-      debugPrint('[ReceiveShipmentScreen] Waste types error: ${wasteTypesResponse.error?.message}');
-
-      debugPrint('[ReceiveShipmentScreen] Loading senders...');
       final sendersResponse = await _senderService.getAssignedSenders();
-      debugPrint('[ReceiveShipmentScreen] Senders response: ${sendersResponse.isSuccess}');
-      debugPrint('[ReceiveShipmentScreen] Senders data: ${sendersResponse.data?.length ?? 0}');
-      debugPrint('[ReceiveShipmentScreen] Senders error: ${sendersResponse.error?.message}');
 
       if (mounted) {
         setState(() {
           if (wasteTypesResponse.isSuccess && wasteTypesResponse.data != null) {
             _wasteTypes = wasteTypesResponse.data!;
-            debugPrint('[ReceiveShipmentScreen] Loaded ${_wasteTypes.length} waste types');
-          } else {
-            debugPrint('[ReceiveShipmentScreen] Failed to load waste types: ${wasteTypesResponse.error?.message}');
           }
           if (sendersResponse.isSuccess && sendersResponse.data != null) {
             _senders = sendersResponse.data!;
-            debugPrint('[ReceiveShipmentScreen] Loaded ${_senders.length} senders');
-          } else {
-            debugPrint('[ReceiveShipmentScreen] Failed to load senders: ${sendersResponse.error?.message}');
           }
           _isLoadingData = false;
         });
@@ -108,8 +93,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
         }
       }
     } catch (e, stackTrace) {
-      debugPrint('[ReceiveShipmentScreen] Exception loading data: $e');
-      debugPrint('[ReceiveShipmentScreen] Stack trace: $stackTrace');
       if (mounted) {
         setState(() => _isLoadingData = false);
         ScaffoldMessenger.of(context).showSnackBar(

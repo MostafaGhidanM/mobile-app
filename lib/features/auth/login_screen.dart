@@ -39,28 +39,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    debugPrint('[LoginScreen] Login button pressed');
-    debugPrint('[LoginScreen] Phone: ${_phoneController.text.trim()}');
-    debugPrint('[LoginScreen] Password length: ${_passwordController.text.length}');
-    
     if (!_formKey.currentState!.validate()) {
-      debugPrint('[LoginScreen] Form validation failed');
       return;
     }
 
-    debugPrint('[LoginScreen] Form validated, attempting login...');
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.login(
       _phoneController.text.trim(),
       _passwordController.text,
     );
 
-    debugPrint('[LoginScreen] Login result: $success');
-    debugPrint('[LoginScreen] Is recycling unit: ${authProvider.isRecyclingUnit}');
-    debugPrint('[LoginScreen] Error message: ${authProvider.errorMessage}');
-
     if (success && mounted) {
-      debugPrint('[LoginScreen] Login successful, navigating to dashboard');
       if (authProvider.isRecyclingUnit) {
         context.go('/dashboard');
       } else {
@@ -68,7 +57,6 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go('/dashboard');
       }
     } else if (mounted) {
-      debugPrint('[LoginScreen] Login failed, showing error message');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Login failed'),
@@ -229,14 +217,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Register as Unit Button
                   OutlinedButton(
                     onPressed: () {
-                      debugPrint('[LoginScreen] Register as unit button pressed');
-                      debugPrint('[LoginScreen] Navigating to registration screen');
                       try {
                         context.push('/register-unit');
-                        debugPrint('[LoginScreen] Navigation command executed');
                       } catch (e, stackTrace) {
-                        debugPrint('[LoginScreen] Navigation error: $e');
-                        debugPrint('[LoginScreen] Stack trace: $stackTrace');
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Navigation error: $e'),

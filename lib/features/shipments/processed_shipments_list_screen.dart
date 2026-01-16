@@ -70,6 +70,8 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
             data: ProcessedMaterialShipmentListResponse(
               items: pendingResponse.data!,
               total: pendingResponse.data!.length,
+              page: 1,
+              pageSize: pendingResponse.data!.length,
             ),
           );
         } else {

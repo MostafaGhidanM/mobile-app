@@ -71,13 +71,11 @@ class ImagePickerWidget extends StatelessWidget {
                 onLocationCaptured!(location!);
               }
             } catch (e) {
-              debugPrint('[ImagePickerWidget] Error capturing location: $e');
               // Continue without location if capture fails
             }
           }
         }
       } catch (e) {
-        debugPrint('[ImagePickerWidget] Error checking location permissions: $e');
         // Continue without location if there's an error
       }
     }

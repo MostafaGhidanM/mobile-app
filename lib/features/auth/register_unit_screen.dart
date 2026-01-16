@@ -62,7 +62,6 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint('[RegisterUnitScreen] Screen initialized');
     _loadWasteTypes();
   }
 
@@ -158,7 +157,6 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
         );
       }
     } catch (e) {
-      debugPrint('[RegisterUnitScreen] Error getting location: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -172,7 +170,6 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
   }
 
   Future<void> _loadWasteTypes() async {
-    debugPrint('[RegisterUnitScreen] Loading waste types...');
     setState(() {
       _isLoadingWasteTypes = true;
     });
@@ -180,13 +177,11 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
     final response = await _wasteTypeService.getWasteTypes();
     
     if (response.isSuccess && response.data != null) {
-      debugPrint('[RegisterUnitScreen] Waste types loaded: ${response.data!.length}');
       setState(() {
         _wasteTypes = response.data!;
         _isLoadingWasteTypes = false;
       });
     } else {
-      debugPrint('[RegisterUnitScreen] Failed to load waste types: ${response.error?.message}');
       setState(() {
         _isLoadingWasteTypes = false;
       });
@@ -203,10 +198,7 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
   }
 
   Future<void> _handleRegister() async {
-    debugPrint('[RegisterUnitScreen] Register button pressed');
-
     if (!_formKey.currentState!.validate()) {
-      debugPrint('[RegisterUnitScreen] Form validation failed');
       return;
     }
 
@@ -288,7 +280,6 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
     });
 
     if (response.isSuccess) {
-      debugPrint('[RegisterUnitScreen] Registration successful');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -305,7 +296,6 @@ class _RegisterUnitScreenState extends State<RegisterUnitScreen> {
         });
       }
     } else {
-      debugPrint('[RegisterUnitScreen] Registration failed: ${response.error?.message}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

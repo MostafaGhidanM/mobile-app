@@ -52,7 +52,6 @@ class PushNotificationService {
   }
 
   void _onNotificationTapped(NotificationResponse response) {
-    debugPrint('Notification tapped: ${response.payload}');
     // Navigate to notifications screen if app is open
     // This is handled in the app's navigation logic
   }
@@ -90,13 +89,12 @@ class PushNotificationService {
             final userData = jsonDecode(userDataStr) as Map<String, dynamic>?;
             phoneNumber = userData?['phoneNumber'] as String?;
           } catch (e) {
-            debugPrint('Failed to parse userData: $e');
+            // Ignore parse errors
           }
         }
       }
 
       if (phoneNumber == null) {
-        debugPrint('No phone number found, skipping notification check');
         return;
       }
 
@@ -129,7 +127,7 @@ class PushNotificationService {
         }
       }
     } catch (e) {
-      debugPrint('Error checking for new notifications: $e');
+      // Ignore errors
     }
   }
 

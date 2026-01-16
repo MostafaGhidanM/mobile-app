@@ -54,7 +54,6 @@ class _NotificationBadgeState extends State<NotificationBadge> {
       }
     } catch (e) {
       // Ignore errors for unread count
-      debugPrint('Failed to load unread count: $e');
     }
   }
 

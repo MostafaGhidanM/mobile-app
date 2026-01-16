@@ -39,10 +39,7 @@ class RecyclingUnitService {
     // Optional
     Map<String, double>? geoLocation,
   }) async {
-    debugPrint('[RecyclingUnitService] Starting registration...');
-
     // Upload ID card front image
-    debugPrint('[RecyclingUnitService] Uploading ID card front image...');
     final frontImageData = kIsWeb ? idCardFrontBytes : idCardFrontFile;
     if (frontImageData == null) {
       return ApiResponse<Map<String, dynamic>>(
@@ -66,7 +63,6 @@ class RecyclingUnitService {
     final idCardFrontImage = frontUploadResponse.data!.url;
 
     // Upload ID card back image
-    debugPrint('[RecyclingUnitService] Uploading ID card back image...');
     final backImageData = kIsWeb ? idCardBackBytes : idCardBackFile;
     if (backImageData == null) {
       return ApiResponse<Map<String, dynamic>>(
@@ -196,17 +192,11 @@ class RecyclingUnitService {
       registrationData['geoLocation'] = geoLocation;
     }
 
-    debugPrint('[RecyclingUnitService] Submitting registration...');
     final response = await _apiClient.post<Map<String, dynamic>>(
       ApiEndpoints.recyclingUnitsRegister,
       data: registrationData,
       fromJson: (json) => json as Map<String, dynamic>,
     );
-
-    debugPrint('[RecyclingUnitService] Registration response: ${response.isSuccess}');
-    if (!response.isSuccess) {
-      debugPrint('[RecyclingUnitService] Registration error: ${response.error?.message}');
-    }
 
     return response;
   }

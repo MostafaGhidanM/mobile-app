@@ -20,11 +20,9 @@ class RegistrationService {
     required List<String> activityTypeIds,
   }) async {
     // Upload images first
-    debugPrint('[RegistrationService] Uploading national ID front image...');
     final frontImageData = kIsWeb ? nationalIdFrontBytes : nationalIdFront;
     final frontUploadResponse = await _uploadService.uploadImage(frontImageData!);
     if (!frontUploadResponse.isSuccess || frontUploadResponse.data == null) {
-      debugPrint('[RegistrationService] Failed to upload front image: ${frontUploadResponse.error?.message}');
       return ApiResponse<Map<String, dynamic>>(
         success: false,
         error: frontUploadResponse.error ?? ApiError(
@@ -34,13 +32,10 @@ class RegistrationService {
       );
     }
     final frontImageUrl = frontUploadResponse.data!.url;
-    debugPrint('[RegistrationService] Front image uploaded: $frontImageUrl');
 
-    debugPrint('[RegistrationService] Uploading national ID back image...');
     final backImageData = kIsWeb ? nationalIdBackBytes : nationalIdBack;
     final backUploadResponse = await _uploadService.uploadImage(backImageData!);
     if (!backUploadResponse.isSuccess || backUploadResponse.data == null) {
-      debugPrint('[RegistrationService] Failed to upload back image: ${backUploadResponse.error?.message}');
       return ApiResponse<Map<String, dynamic>>(
         success: false,
         error: backUploadResponse.error ?? ApiError(
@@ -50,14 +45,8 @@ class RegistrationService {
       );
     }
     final backImageUrl = backUploadResponse.data!.url;
-    debugPrint('[RegistrationService] Back image uploaded: $backImageUrl');
 
     // Submit registration
-    debugPrint('[RegistrationService] Submitting registration...');
-    debugPrint('[RegistrationService] Full Name: $fullName');
-    debugPrint('[RegistrationService] Mobile: $mobile');
-    debugPrint('[RegistrationService] Activity Type IDs: $activityTypeIds');
-
     final response = await _apiClient.post<Map<String, dynamic>>(
       ApiEndpoints.registrationCreate,
       data: {
@@ -69,11 +58,6 @@ class RegistrationService {
       },
       fromJson: (json) => json as Map<String, dynamic>,
     );
-
-    debugPrint('[RegistrationService] Registration response: ${response.isSuccess}');
-    if (!response.isSuccess) {
-      debugPrint('[RegistrationService] Registration error: ${response.error?.message}');
-    }
 
     return response;
   }

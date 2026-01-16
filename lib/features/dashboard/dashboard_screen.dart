@@ -52,7 +52,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         }
       } catch (e) {
-        debugPrint('Error loading credit: $e');
         setState(() {
           _credit = 0.0;
           _loadingCredit = false;

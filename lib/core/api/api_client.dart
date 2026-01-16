@@ -28,33 +28,21 @@ class ApiClient {
         validateStatus: (status) => status! < 500,
       ),
     );
-    
-    debugPrint('[ApiClient] Initialized with baseUrl: ${ApiEndpoints.baseUrl}');
 
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          debugPrint('[ApiClient] Request: ${options.method} ${options.baseUrl}${options.path}');
-          debugPrint('[ApiClient] Headers: ${options.headers}');
-          debugPrint('[ApiClient] Data: ${options.data}');
           // Add auth token to headers
           final token = await _getToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
-            debugPrint('[ApiClient] Added auth token to headers');
           }
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          debugPrint('[ApiClient] Response: ${response.statusCode} ${response.statusMessage}');
-          debugPrint('[ApiClient] Response data: ${response.data}');
           return handler.next(response);
         },
         onError: (error, handler) {
-          debugPrint('[ApiClient] Error: ${error.type}');
-          debugPrint('[ApiClient] Error message: ${error.message}');
-          debugPrint('[ApiClient] Error response: ${error.response?.data}');
-          debugPrint('[ApiClient] Error status code: ${error.response?.statusCode}');
           // Handle errors globally
           if (error.response?.statusCode == 401) {
             // Token expired or invalid - clear token
@@ -264,19 +252,10 @@ class ApiClient {
   }
 
   ApiResponse<T> _handleError<T>(DioException error) {
-    debugPrint('[ApiClient] _handleError called');
-    debugPrint('[ApiClient] Error type: ${error.type}');
-    debugPrint('[ApiClient] Error message: ${error.message}');
-    debugPrint('[ApiClient] Error response: ${error.response}');
-    debugPrint('[ApiClient] Error request options: ${error.requestOptions.uri}');
-    
     if (error.response != null) {
-      debugPrint('[ApiClient] Response status: ${error.response!.statusCode}');
-      debugPrint('[ApiClient] Response data: ${error.response!.data}');
       try {
         return ApiResponse.fromJson(error.response!.data, null);
       } catch (e) {
-        debugPrint('[ApiClient] Failed to parse error response: $e');
         return ApiResponse<T>(
           success: false,
           error: ApiError(
@@ -288,7 +267,6 @@ class ApiClient {
       }
     } else if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout) {
-      debugPrint('[ApiClient] Timeout error');
       return ApiResponse<T>(
         success: false,
         error: ApiError(
@@ -297,9 +275,6 @@ class ApiClient {
         ),
       );
     } else if (error.type == DioExceptionType.connectionError) {
-      debugPrint('[ApiClient] Connection error - CORS or network issue');
-      debugPrint('[ApiClient] Base URL: ${ApiEndpoints.baseUrl}');
-      debugPrint('[ApiClient] Request URL: ${error.requestOptions.uri}');
       return ApiResponse<T>(
         success: false,
         error: ApiError(
@@ -309,7 +284,6 @@ class ApiClient {
         ),
       );
     } else {
-      debugPrint('[ApiClient] Generic network error: ${error.type}');
       return ApiResponse<T>(
         success: false,
         error: ApiError(

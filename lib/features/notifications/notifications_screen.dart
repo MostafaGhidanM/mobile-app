@@ -120,7 +120,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     } catch (e) {
       // Ignore errors for unread count
-      debugPrint('Failed to load unread count: $e');
     }
   }
 
@@ -139,7 +138,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Failed to mark notification as read: $e');
+      // Ignore errors
     }
   }
 
@@ -157,7 +156,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Failed to mark all as read: $e');
+      // Ignore errors
     }
   }
 

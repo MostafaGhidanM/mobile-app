@@ -90,22 +90,18 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
       // Load all recycling units and filter for SHREDDER and WASHING_LINE
       List<RecyclingUnit> factoryUnits = [];
       try {
-        debugPrint('[SendProcessedShipmentScreen] Loading all recycling units...');
         final allUnitsResponse = await _recyclingUnitService.getRecyclingUnits(
           page: 1,
           pageSize: 100,
         );
-        debugPrint('[SendProcessedShipmentScreen] All units response: ${allUnitsResponse.isSuccess}, count: ${allUnitsResponse.data?.length ?? 0}');
         
         if (allUnitsResponse.isSuccess && allUnitsResponse.data != null) {
           // Filter for SHREDDER and WASHING_LINE units only
           factoryUnits = allUnitsResponse.data!.where((unit) {
             return unit.unitType == UnitType.shredder || unit.unitType == UnitType.washingLine;
           }).toList();
-          debugPrint('[SendProcessedShipmentScreen] Filtered factory units (SHREDDER/WASHING_LINE): ${factoryUnits.length}');
         }
       } catch (e) {
-        debugPrint('[SendProcessedShipmentScreen] Error loading recycling units: $e');
         // Continue without factory units list
       }
       
@@ -117,7 +113,6 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
           trades = tradesResponse.data!;
         }
       } catch (e) {
-        debugPrint('[SendProcessedShipmentScreen] Could not load trades: $e');
         // Continue without trades list
       }
 
