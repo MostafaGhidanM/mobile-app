@@ -289,5 +289,19 @@ class RecyclingUnitService {
       ),
     );
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> getCredit() async {
+    return await _apiClient.get<Map<String, dynamic>>(
+      ApiEndpoints.recyclingUnitsCredit,
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+  }
+
+  Future<ApiResponse<Map<String, dynamic>>> getPoints() async {
+    return await _apiClient.get<Map<String, dynamic>>(
+      ApiEndpoints.recyclingUnitsPoints,
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+  }
 }
 

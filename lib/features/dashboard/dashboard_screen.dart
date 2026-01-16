@@ -5,10 +5,68 @@ import '../../features/auth/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/notification_badge.dart';
+import '../../core/services/recycling_unit_service.dart';
+import '../../core/models/recycling_unit.dart';
 import 'package:go_router/go_router.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final RecyclingUnitService _recyclingUnitService = RecyclingUnitService();
+  double? _credit;
+  int? _points;
+  bool _loadingCredit = false;
+  bool _loadingPoints = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCreditAndPoints();
+  }
+
+  Future<void> _loadCreditAndPoints() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final unit = authProvider.recyclingUnit;
+
+    // Load credit for PRESS units
+    if (unit?.unitType == UnitType.press) {
+      setState(() => _loadingCredit = true);
+      try {
+        final creditResponse = await _recyclingUnitService.getCredit();
+        if (creditResponse.isSuccess && creditResponse.data != null) {
+          setState(() {
+            _credit = (creditResponse.data!['credit'] as num?)?.toDouble() ?? 0.0;
+            _loadingCredit = false;
+          });
+        } else {
+          setState(() => _loadingCredit = false);
+        }
+      } catch (e) {
+        setState(() => _loadingCredit = false);
+      }
+    }
+
+    // Load points for all units
+    setState(() => _loadingPoints = true);
+    try {
+      final pointsResponse = await _recyclingUnitService.getPoints();
+      if (pointsResponse.isSuccess && pointsResponse.data != null) {
+        setState(() {
+          _points = (pointsResponse.data!['points'] as num?)?.toInt() ?? 0;
+          _loadingPoints = false;
+        });
+      } else {
+        setState(() => _loadingPoints = false);
+      }
+    } catch (e) {
+      setState(() => _loadingPoints = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +144,60 @@ class DashboardScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              // Inventory Card
+              // Credit/Stock Card (for PRESS units only)
+              if (unit?.unitType == UnitType.press)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.inventory,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            localizations.inventory,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      _loadingCredit
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              '${(_credit ?? 0).toStringAsFixed(0)} ${isRTL ? 'كيلو' : 'kg'}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+              // Points Card (for all units)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
@@ -107,13 +218,13 @@ class DashboardScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          Icons.inventory,
-                          color: Theme.of(context).colorScheme.primary,
+                          Icons.stars,
+                          color: Theme.of(context).colorScheme.secondary,
                           size: 32,
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          localizations.inventory,
+                          isRTL ? 'النقاط' : 'Points',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -121,14 +232,20 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Text(
-                      '0 كيلو', // TODO: Get from backend
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
+                    _loadingPoints
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            '${_points ?? 0}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                          ),
                   ],
                 ),
               ),

@@ -41,6 +41,8 @@ class ApiEndpoints {
   // Recycling Units
   static const String recyclingUnitsRegister = '/recycling-units/register';
   static const String recyclingUnits = '/recycling-units';
+  static const String recyclingUnitsCredit = '/recycling-units/me/credit';
+  static const String recyclingUnitsPoints = '/recycling-units/me/points';
 
   // Processed Material Shipments
   static const String processedMaterialShipmentsSent = '/processed-material-shipments-sent';

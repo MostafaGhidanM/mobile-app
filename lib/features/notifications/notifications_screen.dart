@@ -190,6 +190,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Colors.red;
       case 'NEW_UNIT_REGISTRATION':
       case 'NEW_SHIPMENT_RECEIVED':
+      case 'PROCESSED_SHIPMENT_SENT':
         return Colors.blue;
       case 'POINTS_ADDED':
         return Colors.orange;
