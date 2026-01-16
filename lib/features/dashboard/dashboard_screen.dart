@@ -19,21 +19,20 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final RecyclingUnitService _recyclingUnitService = RecyclingUnitService();
   double? _credit;
-  int? _points;
   bool _loadingCredit = false;
-  bool _loadingPoints = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCreditAndPoints();
+    _loadCredit();
   }
 
-  Future<void> _loadCreditAndPoints() async {
+  Future<void> _loadCredit() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final unit = authProvider.recyclingUnit;
 
-    // Load credit for PRESS units
+    // Load credit (stock) for PRESS units only
+    // Credit is based on approved raw material shipments (1 kg = 1 credit)
     if (unit?.unitType == UnitType.press) {
       setState(() => _loadingCredit = true);
       try {
@@ -49,22 +48,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } catch (e) {
         setState(() => _loadingCredit = false);
       }
-    }
-
-    // Load points for all units
-    setState(() => _loadingPoints = true);
-    try {
-      final pointsResponse = await _recyclingUnitService.getPoints();
-      if (pointsResponse.isSuccess && pointsResponse.data != null) {
-        setState(() {
-          _points = (pointsResponse.data!['points'] as num?)?.toInt() ?? 0;
-          _loadingPoints = false;
-        });
-      } else {
-        setState(() => _loadingPoints = false);
-      }
-    } catch (e) {
-      setState(() => _loadingPoints = false);
     }
   }
 
@@ -144,7 +127,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-              // Credit/Stock Card (for PRESS units only)
+              // Stock/Credit Card (for PRESS units only)
+              // Shows stock based on approved raw material shipments (1 kg = 1 credit)
               if (unit?.unitType == UnitType.press)
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -197,58 +181,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
-              // Points Card (for all units)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.stars,
-                          color: Theme.of(context).colorScheme.secondary,
-                          size: 32,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          isRTL ? 'النقاط' : 'Points',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    _loadingPoints
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            '${_points ?? 0}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                          ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 24),
               // Quick Actions
               Padding(
