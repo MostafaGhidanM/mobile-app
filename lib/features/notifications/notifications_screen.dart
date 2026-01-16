@@ -189,9 +189,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'REJECTED':
         return Colors.red;
       case 'NEW_UNIT_REGISTRATION':
+      case 'NEW_SHIPMENT_RECEIVED':
         return Colors.blue;
-      default:
+      case 'POINTS_ADDED':
         return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 
