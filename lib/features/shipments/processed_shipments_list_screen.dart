@@ -74,30 +74,33 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
       ApiResponse<ProcessedMaterialShipmentListResponse> response;
       
       if (isFactoryUnit) {
-        // Factory units should use pending-receipt endpoint to see shipments sent to them
+        // Factory units should see both pending and received shipments
         final pendingResponse = await _shipmentService.getPendingReceiptShipments();
+        final receivedResponse = await _shipmentService.getReceivedShipments();
         
         // #region agent log
-        _debugLog('processed_shipments_list_screen.dart:81', 'Factory unit - pending receipts response', {'isSuccess': pendingResponse.isSuccess, 'itemsCount': pendingResponse.data?.length}, 'G');
+        _debugLog('processed_shipments_list_screen.dart:78', 'Factory unit - pending receipts response', {'isSuccess': pendingResponse.isSuccess, 'itemsCount': pendingResponse.data?.length}, 'G');
+        _debugLog('processed_shipments_list_screen.dart:79', 'Factory unit - received shipments response', {'isSuccess': receivedResponse.isSuccess, 'itemsCount': receivedResponse.data?.length}, 'G');
         // #endregion
         
+        // Combine both lists
+        final allShipments = <ProcessedMaterialShipment>[];
         if (pendingResponse.isSuccess && pendingResponse.data != null) {
-          // Convert to list response format
-          response = ApiResponse<ProcessedMaterialShipmentListResponse>(
-            success: true,
-            data: ProcessedMaterialShipmentListResponse(
-              items: pendingResponse.data!,
-              total: pendingResponse.data!.length,
-              page: 1,
-              pageSize: pendingResponse.data!.length,
-            ),
-          );
-        } else {
-          response = ApiResponse<ProcessedMaterialShipmentListResponse>(
-            success: false,
-            error: pendingResponse.error,
-          );
+          allShipments.addAll(pendingResponse.data!);
         }
+        if (receivedResponse.isSuccess && receivedResponse.data != null) {
+          allShipments.addAll(receivedResponse.data!);
+        }
+        
+        response = ApiResponse<ProcessedMaterialShipmentListResponse>(
+          success: true,
+          data: ProcessedMaterialShipmentListResponse(
+            items: allShipments,
+            total: allShipments.length,
+            page: 1,
+            pageSize: allShipments.length,
+          ),
+        );
       } else {
         // Press units use regular list endpoint
         response = await _shipmentService.listProcessedMaterialShipments(
@@ -304,26 +307,6 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
                             ),
             ),
           ],
-        ),
-        bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: 1,
-          onTap: (index) {
-            switch (index) {
-              case 0:
-                context.go('/dashboard');
-                break;
-              case 1:
-                // Already on shipments
-                break;
-              case 2:
-                // TODO: Navigate to orders
-                break;
-              case 3:
-                context.push('/settings');
-                break;
-            }
-          },
-          isRTL: isRTL,
         ),
       ),
     );
