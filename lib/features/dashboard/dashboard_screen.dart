@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
@@ -32,12 +34,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final unit = authProvider.recyclingUnit;
 
+    // #region agent log
+    try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:31","message":"_loadCredit called","data":{"unitIsNull":unit==null,"unitType":unit?.unitType?.toString(),"unitTypeEnum":unit?.unitType==UnitType.press},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"})}\n', mode: FileMode.append); } catch (_) {}
+    // #endregion
+
     // Load credit (stock) for PRESS units only
     // Credit is based on approved raw material shipments (1 kg = 1 credit)
-    if (unit?.unitType == UnitType.press) {
+    final isPress = unit?.unitType == UnitType.press;
+    
+    // #region agent log
+    try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:40","message":"Unit type check result","data":{"isPress":isPress,"unitTypeValue":unit?.unitType?.toString(),"pressEnum":UnitType.press.toString()},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"})}\n', mode: FileMode.append); } catch (_) {}
+    // #endregion
+    
+    if (isPress) {
       setState(() => _loadingCredit = true);
       try {
         final creditResponse = await _recyclingUnitService.getCredit();
+        
+        // #region agent log
+        try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:47","message":"Credit API response","data":{"isSuccess":creditResponse.isSuccess,"hasData":creditResponse.data!=null,"creditValue":creditResponse.data?['credit']},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"})}\n', mode: FileMode.append); } catch (_) {}
+        // #endregion
+        
         if (creditResponse.isSuccess && creditResponse.data != null) {
           final creditValue = creditResponse.data!['credit'];
           setState(() {
@@ -52,6 +69,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         }
       } catch (e) {
+        // #region agent log
+        try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:62","message":"Credit API error","data":{"error":e.toString()},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"})}\n', mode: FileMode.append); } catch (_) {}
+        // #endregion
         setState(() {
           _credit = 0.0;
           _loadingCredit = false;
@@ -141,8 +161,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               // Stock/Credit Card (for PRESS units only)
               // Shows stock based on approved raw material shipments (1 kg = 1 credit)
-              if (unit?.unitType == UnitType.press)
-                Container(
+              Builder(
+                builder: (context) {
+                  final showStock = unit?.unitType == UnitType.press;
+                  // #region agent log
+                  try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:162","message":"Stock card visibility check","data":{"showStock":showStock,"unitType":unit?.unitType?.toString(),"creditValue":_credit},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"})}\n', mode: FileMode.append); } catch (_) {}
+                  // #endregion
+                  if (!showStock) return const SizedBox.shrink();
+                  return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -192,7 +218,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                     ],
                   ),
-                ),
+                );
+                },
+              ),
               const SizedBox(height: 24),
               // Quick Actions
               Padding(

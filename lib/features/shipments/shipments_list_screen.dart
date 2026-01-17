@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +11,13 @@ import '../../widgets/bottom_nav_bar.dart';
 import 'shipment_card.dart';
 import 'processed_shipments_list_screen.dart';
 import 'package:go_router/go_router.dart';
+
+void _debugLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+  try {
+    final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log');
+    f.writeAsStringSync('${jsonEncode({"location":location,"message":message,"data":data,"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":hypothesisId})}\n', mode: FileMode.append);
+  } catch (_) {}
+}
 
 class ShipmentsListScreen extends StatefulWidget {
   const ShipmentsListScreen({Key? key}) : super(key: key);
@@ -54,10 +63,18 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
     });
 
     try {
+      // #region agent log
+      _debugLog('shipments_list_screen.dart:57', 'Loading raw material shipments', {'page': _currentPage, 'filter': _selectedFilter}, 'H');
+      // #endregion
+      
       final response = await _shipmentService.listShipments(
         page: _currentPage,
         pageSize: 20,
       );
+      
+      // #region agent log
+      _debugLog('shipments_list_screen.dart:66', 'Raw material shipments response', {'isSuccess': response.isSuccess, 'itemsCount': response.data?.items?.length}, 'H');
+      // #endregion
 
       if (response.isSuccess && response.data != null) {
         setState(() {
@@ -109,6 +126,10 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
     final recyclingUnit = authProvider.recyclingUnit;
     final isPressUnit = recyclingUnit?.isPressUnit() ?? false;
     final isFactoryUnit = recyclingUnit?.isFactoryUnit() ?? false;
+    
+    // #region agent log
+    _debugLog('shipments_list_screen.dart:112', 'Shipments screen unit type check', {'unitIsNull': recyclingUnit == null, 'unitType': recyclingUnit?.unitType?.toString(), 'isPressUnit': isPressUnit, 'isFactoryUnit': isFactoryUnit}, 'D');
+    // #endregion
 
     return Directionality(
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,

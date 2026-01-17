@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
@@ -8,6 +10,13 @@ import '../../features/auth/auth_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'processed_shipment_card.dart';
 import 'package:go_router/go_router.dart';
+
+void _debugLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+  try {
+    final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log');
+    f.writeAsStringSync('${jsonEncode({"location":location,"message":message,"data":data,"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":hypothesisId})}\n', mode: FileMode.append);
+  } catch (_) {}
+}
 
 class ProcessedShipmentsListScreen extends StatefulWidget {
   const ProcessedShipmentsListScreen({Key? key}) : super(key: key);
@@ -58,11 +67,20 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
       final recyclingUnit = authProvider.recyclingUnit;
       final isFactoryUnit = recyclingUnit?.isFactoryUnit() ?? false;
 
+      // #region agent log
+      _debugLog('processed_shipments_list_screen.dart:69', '_loadShipments unit check', {'unitIsNull': recyclingUnit == null, 'unitType': recyclingUnit?.unitType?.toString(), 'isFactoryUnit': isFactoryUnit}, 'G');
+      // #endregion
+
       ApiResponse<ProcessedMaterialShipmentListResponse> response;
       
       if (isFactoryUnit) {
         // Factory units should use pending-receipt endpoint to see shipments sent to them
         final pendingResponse = await _shipmentService.getPendingReceiptShipments();
+        
+        // #region agent log
+        _debugLog('processed_shipments_list_screen.dart:81', 'Factory unit - pending receipts response', {'isSuccess': pendingResponse.isSuccess, 'itemsCount': pendingResponse.data?.length}, 'G');
+        // #endregion
+        
         if (pendingResponse.isSuccess && pendingResponse.data != null) {
           // Convert to list response format
           response = ApiResponse<ProcessedMaterialShipmentListResponse>(
@@ -87,6 +105,10 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
           pageSize: 20,
           status: _selectedFilter != 'all' ? _getStatusString(_selectedFilter) : null,
         );
+        
+        // #region agent log
+        _debugLog('processed_shipments_list_screen.dart:110', 'Press unit - sent shipments response', {'isSuccess': response.isSuccess, 'itemsCount': response.data?.items?.length}, 'G');
+        // #endregion
       }
 
       if (response.isSuccess && response.data != null) {

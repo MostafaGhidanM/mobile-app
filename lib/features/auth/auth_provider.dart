@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/recycling_unit_service.dart';
@@ -5,6 +7,13 @@ import '../../core/models/user.dart';
 import '../../core/models/recycling_unit.dart';
 import '../../core/utils/storage.dart';
 import '../../core/utils/constants.dart';
+
+void _debugLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+  try {
+    final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log');
+    f.writeAsStringSync('${jsonEncode({"location":location,"message":message,"data":data,"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":hypothesisId})}\n', mode: FileMode.append);
+  } catch (_) {}
+}
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -33,9 +42,19 @@ class AuthProvider with ChangeNotifier {
         _user = response.data!.user;
         _recyclingUnit = response.data!.recyclingUnit;
         
+        // #region agent log
+        _debugLog('auth_provider.dart:43', 'Login response received', {'hasUser': _user != null, 'hasRecyclingUnit': _recyclingUnit != null, 'unitType': _recyclingUnit?.unitType?.toString(), 'unitId': _recyclingUnit?.id}, 'E');
+        // #endregion
+        
         // If unitType is missing, try to fetch it from the API
         if (_recyclingUnit != null && _recyclingUnit!.unitType == null) {
+          // #region agent log
+          _debugLog('auth_provider.dart:48', 'Fetching unit details - unitType is null', {'unitId': _recyclingUnit!.id}, 'E');
+          // #endregion
           await _fetchUnitDetails(_recyclingUnit!.id);
+          // #region agent log
+          _debugLog('auth_provider.dart:51', 'After fetchUnitDetails', {'unitType': _recyclingUnit?.unitType?.toString()}, 'E');
+          // #endregion
         }
         
         _isLoading = false;
@@ -60,16 +79,31 @@ class AuthProvider with ChangeNotifier {
       final recyclingUnitService = RecyclingUnitService();
       final response = await recyclingUnitService.getRecyclingUnits();
       
+      // #region agent log
+      _debugLog('auth_provider.dart:60', '_fetchUnitDetails API call', {'isSuccess': response.isSuccess, 'unitsCount': response.data?.length, 'unitId': unitId}, 'F');
+      // #endregion
+      
       if (response.isSuccess && response.data != null) {
         final unit = response.data!.firstWhere(
           (u) => u.id == unitId,
           orElse: () => _recyclingUnit!,
         );
+        
+        // #region agent log
+        _debugLog('auth_provider.dart:68', 'Found unit in response', {'unitType': unit.unitType?.toString(), 'unitId': unit.id}, 'F');
+        // #endregion
+        
         if (unit.unitType != null) {
           _recyclingUnit = unit;
+          // #region agent log
+          _debugLog('auth_provider.dart:71', 'Updated recyclingUnit with unitType', {'unitType': _recyclingUnit?.unitType?.toString()}, 'F');
+          // #endregion
         }
       }
     } catch (e) {
+      // #region agent log
+      _debugLog('auth_provider.dart:75', '_fetchUnitDetails error', {'error': e.toString()}, 'F');
+      // #endregion
       // Continue without unitType - the app will still work
     }
   }
