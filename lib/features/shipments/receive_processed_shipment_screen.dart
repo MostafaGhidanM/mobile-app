@@ -64,15 +64,7 @@ class _ReceiveProcessedShipmentScreenState extends State<ReceiveProcessedShipmen
   }
 
   void _openReceiveDialog(ProcessedMaterialShipment shipment) {
-    showDialog(
-      context: context,
-      builder: (context) => _ReceiveShipmentDialog(
-        shipment: shipment,
-        onReceived: () {
-          _loadPendingShipments();
-        },
-      ),
-    );
+    context.push('/shipments/receive-processed/${shipment.id}');
   }
 
   @override
@@ -136,20 +128,19 @@ class _ReceiveProcessedShipmentScreenState extends State<ReceiveProcessedShipmen
   }
 }
 
-class _ReceiveShipmentDialog extends StatefulWidget {
-  final ProcessedMaterialShipment shipment;
-  final VoidCallback onReceived;
+class ReceiveProcessedShipmentDetailScreen extends StatefulWidget {
+  final String shipmentId;
 
-  const _ReceiveShipmentDialog({
-    required this.shipment,
-    required this.onReceived,
-  });
+  const ReceiveProcessedShipmentDetailScreen({
+    Key? key,
+    required this.shipmentId,
+  }) : super(key: key);
 
   @override
-  State<_ReceiveShipmentDialog> createState() => _ReceiveShipmentDialogState();
+  State<ReceiveProcessedShipmentDetailScreen> createState() => _ReceiveProcessedShipmentDetailScreenState();
 }
 
-class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
+class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedShipmentDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _receivedWeightController = TextEditingController();
   final _emptyCarWeightController = TextEditingController();
@@ -159,12 +150,22 @@ class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
   final ShipmentService _shipmentService = ShipmentService();
   final UploadService _uploadService = UploadService();
 
+  ProcessedMaterialShipment? _shipment;
+  bool _isLoading = false;
+  bool _isLoadingShipment = true;
+  String? _errorMessage;
+  
   String? _carCheckImagePath;
   String? _carCheckImageUrl;
   String? _receiptImagePath;
   String? _receiptImageUrl;
   double? _calculatedNetWeight;
-  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShipment();
+  }
 
   @override
   void dispose() {
@@ -173,6 +174,37 @@ class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
     _plentyController.dispose();
     _plentyReasonController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadShipment() async {
+    setState(() {
+      _isLoadingShipment = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _shipmentService.getProcessedMaterialShipmentById(widget.shipmentId);
+      if (response.isSuccess && response.data != null && mounted) {
+        setState(() {
+          _shipment = response.data!;
+          _isLoadingShipment = false;
+        });
+      } else {
+        if (mounted) {
+          setState(() {
+            _errorMessage = response.error?.message ?? 'Failed to load shipment';
+            _isLoadingShipment = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoadingShipment = false;
+        });
+      }
+    }
   }
 
   void _calculateNetWeight() {
@@ -203,7 +235,7 @@ class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
     }
   }
 
-  Future<void> _uploadReceiptImageDialog(dynamic imageData) async {
+  Future<void> _uploadReceiptImage(dynamic imageData) async {
     if (kIsWeb) {
       setState(() => _receiptImagePath = 'web_image');
       await _uploadImageFromBytes(imageData as Uint8List, false);
@@ -289,20 +321,22 @@ class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
   }
 
   Future<void> _submitReceive() async {
-    if (!_formKey.currentState!.validate()) return;
-    
-    final receivedWeight = double.parse(_receivedWeightController.text);
-    final emptyCarWeight = double.parse(_emptyCarWeightController.text);
-    
-    if (receivedWeight <= emptyCarWeight) {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_carCheckImageUrl == null || _receiptImageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Received weight must be greater than empty car weight'),
+          content: Text('Please upload both car check image and receipt image'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
+
+    final receivedWeight = double.parse(_receivedWeightController.text);
+    final emptyCarWeight = double.parse(_emptyCarWeightController.text);
 
     final factoryUnitId = Provider.of<AuthProvider>(context, listen: false)
         .recyclingUnit?.id;
@@ -321,13 +355,13 @@ class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
 
     try {
       final response = await _shipmentService.receiveProcessedMaterialShipment(
-        shipmentId: widget.shipment.id,
+        shipmentId: widget.shipmentId,
         factoryUnitId: factoryUnitId,
         receivedWeight: receivedWeight,
         emptyCarWeight: emptyCarWeight,
         plenty: double.parse(_plentyController.text),
-        carCheckImage: _carCheckImageUrl,
-        receiptImage: _receiptImageUrl,
+        carCheckImage: _carCheckImageUrl!,
+        receiptImage: _receiptImageUrl!,
         plentyReason: _plentyReasonController.text,
       );
 
@@ -338,8 +372,7 @@ class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context); // Close dialog
-        widget.onReceived();
+        context.pop();
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -366,166 +399,293 @@ class _ReceiveShipmentDialogState extends State<_ReceiveShipmentDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     final isRTL = Localizations.localeOf(context).languageCode == 'ar';
 
     return Directionality(
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-      child: Dialog(
-        child: Container(
-          width: double.maxFinite,
-          padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Receive Shipment: ${widget.shipment.shipmentNumber}',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Shipment Info
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Weight: ${widget.shipment.weight} tons'),
-                          Text('Material: ${widget.shipment.materialTypeName ?? 'N/A'}'),
-                          Text('Pallets: ${widget.shipment.sentPalletsNumber}'),
-                          Text('From: ${widget.shipment.pressUnitName ?? 'N/A'}'),
-                        ],
-                      ),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(localizations.receiveShipment ?? 'Receive Shipment'),
+        ),
+        body: _isLoadingShipment
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(_errorMessage!),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadShipment,
+                          child: const Text('Retry'),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Car Check Image
-                  ImagePickerWidget(
-                    label: 'Car Check Image',
-                    imagePath: _carCheckImagePath,
-                    onImagePicked: _uploadCarCheckImage,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Receipt Image
-                  ImagePickerWidget(
-                    label: 'Receipt Image',
-                    imagePath: _receiptImagePath,
-                    onImagePicked: _uploadReceiptImageDialog,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Received Weight
-                  CustomTextField(
-                    controller: _receivedWeightController,
-                    label: 'Received Weight (tons) *',
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateNetWeight(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter received weight';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Empty Car Weight
-                  CustomTextField(
-                    controller: _emptyCarWeightController,
-                    label: 'Empty Car Weight (tons) *',
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateNetWeight(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter empty car weight';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Plenty
-                  CustomTextField(
-                    controller: _plentyController,
-                    label: 'Plenty (%) *',
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateNetWeight(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter plenty percentage';
-                      }
-                      final plenty = double.tryParse(value);
-                      if (plenty == null) {
-                        return 'Please enter a valid number';
-                      }
-                      if (plenty < 0 || plenty > 100) {
-                        return 'Plenty must be between 0 and 100';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Plenty Reason
-                  CustomTextField(
-                    controller: _plentyReasonController,
-                    label: 'Plenty Reason',
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Calculated Net Weight
-                  if (_calculatedNetWeight != null)
-                    Card(
-                      color: Colors.blue.shade50,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          'Calculated Net Weight: ${_calculatedNetWeight!.toStringAsFixed(3)} tons',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  )
+                : _shipment == null
+                    ? const Center(child: Text('Shipment not found'))
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Section: Press Unit Information (Disabled)
+                              Text(
+                                'Press Unit Information',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Press Unit Name
+                              CustomTextField(
+                                controller: TextEditingController(text: _shipment!.pressUnitName ?? 'N/A'),
+                                label: 'Press Unit Name',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Shipment Number
+                              CustomTextField(
+                                controller: TextEditingController(text: _shipment!.shipmentNumber),
+                                label: 'Shipment Number',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Material Type
+                              CustomTextField(
+                                controller: TextEditingController(text: _shipment!.materialTypeName ?? 'N/A'),
+                                label: 'Material Type',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Weight (from press)
+                              CustomTextField(
+                                controller: TextEditingController(text: '${_shipment!.weight} tons'),
+                                label: 'Weight (from Press)',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Date of Sending
+                              CustomTextField(
+                                controller: TextEditingController(
+                                  text: '${_shipment!.dateOfSending.year}-${_shipment!.dateOfSending.month.toString().padLeft(2, '0')}-${_shipment!.dateOfSending.day.toString().padLeft(2, '0')}'
+                                ),
+                                label: 'Date of Sending',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Pallets Number
+                              CustomTextField(
+                                controller: TextEditingController(text: '${_shipment!.sentPalletsNumber}'),
+                                label: 'Pallets Number',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Car Plate Number
+                              CustomTextField(
+                                controller: TextEditingController(text: _shipment!.carPlateNumber),
+                                label: 'Car Plate Number',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Driver Name
+                              CustomTextField(
+                                controller: TextEditingController(
+                                  text: '${_shipment!.driverFirstName} ${_shipment!.driverSecondName} ${_shipment!.driverThirdName}'
+                                ),
+                                label: 'Driver Name',
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Shipment Image (from press)
+                              if (_shipment!.shipmentImage.isNotEmpty)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Shipment Image (from Press)',
+                                      style: Theme.of(context).textTheme.labelLarge,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Image.network(
+                                      _shipment!.shipmentImage,
+                                      height: 200,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(Icons.broken_image, size: 200);
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                ),
+                              
+                              // Receipt from Press Image
+                              if (_shipment!.receiptFromPress != null && _shipment!.receiptFromPress!.isNotEmpty)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Receipt from Press',
+                                      style: Theme.of(context).textTheme.labelLarge,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Image.network(
+                                      _shipment!.receiptFromPress!,
+                                      height: 200,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(Icons.broken_image, size: 200);
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                ),
+                              
+                              const Divider(height: 32),
+                              
+                              // Section: Factory Input Fields (Editable)
+                              Text(
+                                'Factory Receipt Information',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Car Check Image
+                              ImagePickerWidget(
+                                label: 'Car Check Image *',
+                                imagePath: _carCheckImagePath,
+                                onImagePicked: _uploadCarCheckImage,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Receipt Image
+                              ImagePickerWidget(
+                                label: 'Receipt Image *',
+                                imagePath: _receiptImagePath,
+                                onImagePicked: _uploadReceiptImage,
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Received Weight
+                              CustomTextField(
+                                controller: _receivedWeightController,
+                                label: 'Received Weight (tons) *',
+                                keyboardType: TextInputType.number,
+                                onChanged: (_) => _calculateNetWeight(),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter received weight';
+                                  }
+                                  if (double.tryParse(value) == null) {
+                                    return 'Please enter a valid number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Empty Car Weight
+                              CustomTextField(
+                                controller: _emptyCarWeightController,
+                                label: 'Empty Car Weight (tons) *',
+                                keyboardType: TextInputType.number,
+                                onChanged: (_) => _calculateNetWeight(),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter empty car weight';
+                                  }
+                                  if (double.tryParse(value) == null) {
+                                    return 'Please enter a valid number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Plenty
+                              CustomTextField(
+                                controller: _plentyController,
+                                label: 'Plenty (%) *',
+                                keyboardType: TextInputType.number,
+                                onChanged: (_) => _calculateNetWeight(),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter plenty percentage';
+                                  }
+                                  final plenty = double.tryParse(value);
+                                  if (plenty == null) {
+                                    return 'Please enter a valid number';
+                                  }
+                                  if (plenty < 0 || plenty > 100) {
+                                    return 'Plenty must be between 0 and 100';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Plenty Reason
+                              CustomTextField(
+                                controller: _plentyReasonController,
+                                label: 'Plenty Reason',
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Calculated Net Weight
+                              if (_calculatedNetWeight != null)
+                                Card(
+                                  color: Colors.blue.shade50,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Text(
+                                      'Calculated Net Weight: ${_calculatedNetWeight!.toStringAsFixed(3)} tons',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 24),
+                              
+                              // Buttons
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: _isLoading ? null : () => context.pop(),
+                                      child: const Text('Cancel'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: CustomButton(
+                                      text: 'Receive',
+                                      onPressed: _isLoading ? null : _submitReceive,
+                                      isLoading: _isLoading,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                  const SizedBox(height: 16),
-                  
-                  // Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: _isLoading ? null : () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: CustomButton(
-                          text: 'Receive',
-                          onPressed: _isLoading ? null : _submitReceive,
-                          isLoading: _isLoading,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

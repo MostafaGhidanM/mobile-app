@@ -195,6 +195,13 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const ReceiveProcessedShipmentScreen(),
     ),
     GoRoute(
+      path: '/shipments/receive-processed/:id',
+      builder: (context, state) {
+        final shipmentId = state.pathParameters['id']!;
+        return ReceiveProcessedShipmentDetailScreen(shipmentId: shipmentId);
+      },
+    ),
+    GoRoute(
       path: '/shipments/processed',
       builder: (context, state) => const ProcessedShipmentsListScreen(),
     ),
