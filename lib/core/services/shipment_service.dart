@@ -173,17 +173,15 @@ class ShipmentService {
   }
 
   Future<ApiResponse<List<ProcessedMaterialShipment>>> getPendingReceiptShipments() async {
-    final response = await _apiClient.get<Map<String, dynamic>>(
+    final response = await _apiClient.get<List<dynamic>>(
       ApiEndpoints.processedMaterialShipmentsPendingReceipt,
-      fromJson: (json) => json as Map<String, dynamic>,
+      fromJson: (json) => json as List<dynamic>,
     );
 
     if (response.isSuccess && response.data != null) {
-      final data = response.data!;
-      final items = (data['data'] as List<dynamic>?)
-              ?.map((item) => ProcessedMaterialShipment.fromJson(item as Map<String, dynamic>))
-              .toList() ??
-          [];
+      final items = response.data!
+          .map((item) => ProcessedMaterialShipment.fromJson(item as Map<String, dynamic>))
+          .toList();
       return ApiResponse<List<ProcessedMaterialShipment>>(
         success: true,
         data: items,
@@ -199,17 +197,15 @@ class ShipmentService {
   }
 
   Future<ApiResponse<List<ProcessedMaterialShipment>>> getReceivedShipments() async {
-    final response = await _apiClient.get<Map<String, dynamic>>(
+    final response = await _apiClient.get<List<dynamic>>(
       ApiEndpoints.processedMaterialShipmentsReceived,
-      fromJson: (json) => json as Map<String, dynamic>,
+      fromJson: (json) => json as List<dynamic>,
     );
 
     if (response.isSuccess && response.data != null) {
-      final data = response.data!;
-      final items = (data['data'] as List<dynamic>?)
-              ?.map((item) => ProcessedMaterialShipment.fromJson(item as Map<String, dynamic>))
-              .toList() ??
-          [];
+      final items = response.data!
+          .map((item) => ProcessedMaterialShipment.fromJson(item as Map<String, dynamic>))
+          .toList();
       return ApiResponse<List<ProcessedMaterialShipment>>(
         success: true,
         data: items,
