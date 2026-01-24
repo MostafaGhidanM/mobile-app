@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../core/utils/storage.dart';
+import '../../main.dart';
 import 'auth_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -240,26 +242,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Login with Code
-                  TextButton(
-                    onPressed: () {
-                      // TODO: Implement login with code
-                    },
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                        children: [
-                          TextSpan(text: isRTL ? 'تسجيل الدخول ب' : 'Login with '),
-                          TextSpan(
-                            text: isRTL ? 'رمز التحقق' : 'verification code',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                  // Language Switch
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.language),
+                        onPressed: () => _showLanguageDialog(context),
+                        tooltip: isRTL ? 'تغيير اللغة' : 'Change Language',
                       ),
-                    ),
+                      Text(
+                        isRTL ? 'English' : 'العربية',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -267,6 +266,63 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final isRTL = Localizations.localeOf(context).languageCode == 'ar';
+    final currentLocale = Localizations.localeOf(context);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+          child: AlertDialog(
+            title: Text(localizations.accountLanguage),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<Locale>(
+                  title: const Text('العربية'),
+                  value: const Locale('ar'),
+                  groupValue: currentLocale,
+                  onChanged: (Locale? value) async {
+                    if (value != null) {
+                      await StorageService.setString('app_language', value.languageCode);
+                      MyAppState.changeLocale(value);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    }
+                  },
+                ),
+                RadioListTile<Locale>(
+                  title: const Text('English'),
+                  value: const Locale('en'),
+                  groupValue: currentLocale,
+                  onChanged: (Locale? value) async {
+                    if (value != null) {
+                      await StorageService.setString('app_language', value.languageCode);
+                      MyAppState.changeLocale(value);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(localizations.cancel),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

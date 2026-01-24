@@ -26,6 +26,7 @@ import 'widgets/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await StorageService.init(); // Initialize StorageService
   
   // Initialize app
   runApp(const AppWithSplash());
@@ -166,8 +167,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
 final GoRouter _router = GoRouter(
   initialLocation: '/login',
-  redirect: (context, state) {
+  redirect: (context, state) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    // Ensure auth status is checked before redirect
+    await authProvider.checkAuthStatus();
     final isLoggedIn = authProvider.isAuthenticated;
     final isLoginRoute = state.matchedLocation == '/login';
     final isRegisterUnitRoute = state.matchedLocation == '/register-unit';

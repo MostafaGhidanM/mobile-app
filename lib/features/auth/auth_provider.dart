@@ -57,6 +57,9 @@ class AuthProvider with ChangeNotifier {
           // #endregion
         }
         
+        // Token and user data are already stored by AuthService.login()
+        // No need to store again here
+        
         _isLoading = false;
         notifyListeners();
         return true;
