@@ -203,6 +203,10 @@ class AppLocalizations {
   String get statusOpen => translate('status_open');
   String get statusInProgress => translate('status_in_progress');
   String get statusClosed => translate('status_closed');
+  String get rawShipmentCreatedSuccessfully => translate('raw_shipment_created_successfully');
+  String get rawMaterialReceived => translate('raw_material_received');
+  String get processedMaterialSent => translate('processed_material_sent');
+  String get processedMaterialShipments => translate('processed_material_shipments');
 }
 
 class _AppLocalizationsDelegate

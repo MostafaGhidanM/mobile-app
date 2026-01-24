@@ -239,9 +239,10 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
       );
 
       if (response.isSuccess && mounted) {
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Shipment created successfully'),
+          SnackBar(
+            content: Text(localizations.rawShipmentCreatedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );

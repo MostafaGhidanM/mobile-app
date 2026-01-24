@@ -185,7 +185,7 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Processed Material Shipments'),
+          title: Text(localizations.processedMaterialShipments),
         ),
         body: Column(
           children: [
@@ -223,7 +223,7 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
-                    label: 'Sent to Factory',
+                    label: localizations.statusSentToFactory,
                     isSelected: _selectedFilter == 'sent_to_factory',
                     onTap: () => setState(() {
                       _selectedFilter = 'sent_to_factory';
@@ -232,7 +232,7 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
-                    label: 'Sent to Admin',
+                    label: localizations.statusSentToAdmin,
                     isSelected: _selectedFilter == 'sent_to_admin',
                     onTap: () => setState(() {
                       _selectedFilter = 'sent_to_admin';
@@ -241,7 +241,7 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
-                    label: 'Approved',
+                    label: localizations.statusApproved,
                     isSelected: _selectedFilter == 'approved',
                     onTap: () => setState(() {
                       _selectedFilter = 'approved';
@@ -250,7 +250,7 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
-                    label: 'Rejected',
+                    label: localizations.statusRejected,
                     isSelected: _selectedFilter == 'rejected',
                     onTap: () => setState(() {
                       _selectedFilter = 'rejected';

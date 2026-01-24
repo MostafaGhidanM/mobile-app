@@ -141,8 +141,8 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
             bottom: isPressUnit
                 ? TabBar(
                     tabs: [
-                      const Tab(text: 'Raw Material (Received)'),
-                      const Tab(text: 'Processed Material (Sent)'),
+                      Tab(text: localizations.rawMaterialReceived),
+                      Tab(text: localizations.processedMaterialSent),
                     ],
                   )
                 : null,
@@ -228,7 +228,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
               ),
               const SizedBox(width: 8),
               _FilterChip(
-                label: localizations.inProgress,
+                label: localizations.statusApproved,
                 isSelected: _selectedFilter == 'in_progress',
                 onTap: () => setState(() => _selectedFilter = 'in_progress'),
               ),

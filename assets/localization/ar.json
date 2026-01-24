@@ -214,6 +214,10 @@
   "status_sent_to_admin": "مرسل للإدارة",
   "status_open": "مفتوح",
   "status_in_progress": "قيد العمل",
-  "status_closed": "مغلق"
+  "status_closed": "مغلق",
+  "raw_shipment_created_successfully": "تم إنشاء شحنة المواد الخام بنجاح",
+  "raw_material_received": "المواد الخام (المستلمة)",
+  "processed_material_sent": "المواد المعالجة (المرسلة)",
+  "processed_material_shipments": "شحنات المواد المعالجة"
 }
 

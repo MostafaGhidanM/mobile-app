@@ -17,7 +17,7 @@ class ShipmentCard extends StatelessWidget {
       case ShipmentStatus.pending:
         return localizations.statusOpen;
       case ShipmentStatus.approved:
-        return localizations.statusInProgress;
+        return localizations.statusApproved; // Raw shipments: approved = موافق عليه
       case ShipmentStatus.rejected:
         return localizations.statusClosed;
       case ShipmentStatus.sentToFactory:
