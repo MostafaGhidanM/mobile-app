@@ -10,10 +10,13 @@ import '../../core/services/car_service.dart';
 import '../../core/services/recycling_unit_service.dart';
 import '../../core/services/trade_service.dart';
 import '../../core/services/upload_service.dart';
+import '../../core/services/sender_service.dart';
 import '../../core/models/waste_type.dart';
 import '../../core/models/car.dart';
 import '../../core/models/recycling_unit.dart';
 import '../../core/models/trade.dart';
+import '../../core/models/sender.dart';
+import '../../core/models/shipment.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -35,7 +38,6 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
   final _driverFirstNameController = TextEditingController();
   final _driverSecondNameController = TextEditingController();
   final _driverThirdNameController = TextEditingController();
-  final _palletsController = TextEditingController();
   final _tradeIdController = TextEditingController();
   
   final ShipmentService _shipmentService = ShipmentService();
@@ -44,6 +46,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
   final RecyclingUnitService _recyclingUnitService = RecyclingUnitService();
   final TradeService _tradeService = TradeService();
   final UploadService _uploadService = UploadService();
+  final SenderService _senderService = SenderService();
 
   String? _shipmentImagePath;
   String? _shipmentImageUrl;
@@ -57,6 +60,8 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
   List<Car> _cars = [];
   List<RecyclingUnit> _factoryUnits = [];
   List<Trade> _trades = [];
+  List<Sender> _assignedSenders = [];
+  List<Map<String, dynamic>> _splits = []; // Each split: {senderId, senderName, palletsController, weightController}
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
   bool _isLoadingData = true;
@@ -75,8 +80,12 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     _driverFirstNameController.dispose();
     _driverSecondNameController.dispose();
     _driverThirdNameController.dispose();
-    _palletsController.dispose();
     _tradeIdController.dispose();
+    // Dispose split controllers
+    for (var split in _splits) {
+      (split['palletsController'] as TextEditingController).dispose();
+      (split['weightController'] as TextEditingController).dispose();
+    }
     super.dispose();
   }
 
@@ -116,6 +125,17 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
         // Continue without trades list
       }
 
+      // Load assigned senders
+      List<Sender> assignedSenders = [];
+      try {
+        final sendersResponse = await _senderService.getAssignedSenders();
+        if (sendersResponse.isSuccess && sendersResponse.data != null) {
+          assignedSenders = sendersResponse.data!;
+        }
+      } catch (e) {
+        // Continue without senders list
+      }
+
       if (mounted) {
         setState(() {
           if (materialTypesResponse.isSuccess && materialTypesResponse.data != null) {
@@ -126,6 +146,11 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
           }
           _factoryUnits = factoryUnits;
           _trades = trades;
+          _assignedSenders = assignedSenders;
+          // Initialize with one empty split
+          if (_splits.isEmpty) {
+            _addSplit();
+          }
           _isLoadingData = false;
         });
       }
@@ -140,6 +165,51 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
         );
       }
     }
+  }
+
+  void _addSplit() {
+    setState(() {
+      _splits.add({
+        'senderId': null,
+        'senderName': null,
+        'palletsController': TextEditingController(),
+        'weightController': TextEditingController(),
+      });
+    });
+  }
+
+  void _removeSplit(int index) {
+    setState(() {
+      (_splits[index]['palletsController'] as TextEditingController).dispose();
+      (_splits[index]['weightController'] as TextEditingController).dispose();
+      _splits.removeAt(index);
+    });
+  }
+
+  void _updateSplitSender(int index, String? senderId) {
+    if (_assignedSenders.isEmpty || senderId == null) return;
+    setState(() {
+      final sender = _assignedSenders.firstWhere(
+        (s) => s.id == senderId,
+        orElse: () => _assignedSenders.first,
+      );
+      _splits[index]['senderId'] = senderId;
+      _splits[index]['senderName'] = sender.fullName;
+    });
+  }
+
+  double _calculateTotalSplitWeight() {
+    return _splits.fold<double>(0.0, (sum, split) {
+      final weight = double.tryParse((split['weightController'] as TextEditingController).text) ?? 0.0;
+      return sum + weight;
+    });
+  }
+
+  int _calculateTotalSplitPallets() {
+    return _splits.fold<int>(0, (sum, split) {
+      final pallets = int.tryParse((split['palletsController'] as TextEditingController).text) ?? 0;
+      return sum + pallets;
+    });
   }
 
   Future<void> _selectDate() async {
@@ -276,6 +346,43 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
       return;
     }
 
+    // Validate splits
+    if (_splits.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add at least one split'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate all splits have sender selected
+    for (var i = 0; i < _splits.length; i++) {
+      if (_splits[i]['senderId'] == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please select a sender for split ${i + 1}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+
+    // Validate totals match
+    final totalWeight = double.tryParse(_weightController.text) ?? 0;
+    final totalSplitWeight = _calculateTotalSplitWeight();
+    if ((totalSplitWeight - totalWeight).abs() > 0.01) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Total split weight (${totalSplitWeight.toStringAsFixed(2)} kg) does not match shipment weight (${totalWeight.toStringAsFixed(2)} kg)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -305,10 +412,18 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
         driverThirdName: _driverThirdNameController.text,
         receiverId: _selectedReceiver!.id,
         tradeId: _selectedTrade!.id,
-        sentPalletsNumber: int.parse(_palletsController.text),
+        sentPalletsNumber: _calculateTotalSplitPallets(),
         dateOfSending: _selectedDate,
         shipmentNumber: nextNumberResponse.data,
         receiptFromPress: _receiptImageUrl,
+        splits: _splits.map((split) {
+          return ProcessedMaterialShipmentSplit(
+            senderId: split['senderId'] as String,
+            senderName: split['senderName'] as String?,
+            pallets: int.parse((split['palletsController'] as TextEditingController).text),
+            weight: double.parse((split['weightController'] as TextEditingController).text),
+          );
+        }).toList(),
       );
 
       if (response.isSuccess && mounted) {
@@ -619,20 +734,161 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                             ),
                       const SizedBox(height: 16),
                       
-                      // Pallets Number
-                      CustomTextField(
-                        controller: _palletsController,
-                        label: '${localizations.palletsNumber} *',
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return localizations.pleaseEnterPalletsNumber;
-                          }
-                          if (int.tryParse(value) == null) {
-                            return localizations.pleaseEnterValidNumber;
-                          }
-                          return null;
-                        },
+                      // Splits Section
+                      Text(
+                        '${localizations.palletsNumber} Split by Sender *',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...List.generate(_splits.length, (index) {
+                        final split = _splits[index];
+                        return Column(
+                          children: [
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Split ${index + 1}',
+                                          style: Theme.of(context).textTheme.titleSmall,
+                                        ),
+                                        if (_splits.length > 1)
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () => _removeSplit(index),
+                                            tooltip: 'Remove split',
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Sender Dropdown
+                                    ConstrainedDropdownButtonFormField<Sender>(
+                                      value: split['senderId'] != null && _assignedSenders.isNotEmpty
+                                          ? _assignedSenders.firstWhere(
+                                              (s) => s.id == split['senderId'],
+                                              orElse: () => _assignedSenders.first,
+                                            )
+                                          : null,
+                                      items: _assignedSenders.map((sender) {
+                                        return DropdownMenuItem<Sender>(
+                                          value: sender,
+                                          child: Text(
+                                            sender.fullName,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (sender) {
+                                        if (sender != null) {
+                                          _updateSplitSender(index, sender.id);
+                                        }
+                                      },
+                                      decoration: InputDecoration(
+                                        labelText: 'Select Sender *',
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      validator: (value) {
+                                        if (value == null) {
+                                          return 'Please select a sender';
+                                        }
+                                        return null;
+                                      },
+                                      isExpanded: true,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Pallets Input
+                                    CustomTextField(
+                                      controller: split['palletsController'] as TextEditingController,
+                                      label: 'Pallets *',
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) => setState(() {}), // Trigger rebuild to update totals
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter pallets';
+                                        }
+                                        if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                                          return 'Please enter a valid positive number';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Weight Input
+                                    CustomTextField(
+                                      controller: split['weightController'] as TextEditingController,
+                                      label: 'Weight (kg) *',
+                                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                      onChanged: (_) => setState(() {}), // Trigger rebuild to update totals
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter weight';
+                                        }
+                                        final weight = double.tryParse(value);
+                                        if (weight == null || weight <= 0) {
+                                          return 'Please enter a valid positive number';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      }),
+                      // Add Split Button
+                      OutlinedButton.icon(
+                        onPressed: _addSplit,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Split'),
+                      ),
+                      const SizedBox(height: 16),
+                      // Totals Display
+                      Card(
+                        color: Colors.blue.shade50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Totals:',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text('Total Pallets: ${_calculateTotalSplitPallets()}'),
+                              Text('Total Weight: ${_calculateTotalSplitWeight().toStringAsFixed(2)} kg'),
+                              Text('Shipment Weight: ${_weightController.text.isEmpty ? "0" : _weightController.text} kg'),
+                              const SizedBox(height: 4),
+                              if (_weightController.text.isNotEmpty)
+                                Text(
+                                  _calculateTotalSplitWeight().toStringAsFixed(2) == double.tryParse(_weightController.text)?.toStringAsFixed(2)
+                                      ? '✓ Totals match'
+                                      : '⚠ Totals do not match',
+                                  style: TextStyle(
+                                    color: _calculateTotalSplitWeight().toStringAsFixed(2) == double.tryParse(_weightController.text)?.toStringAsFixed(2)
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       

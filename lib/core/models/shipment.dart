@@ -8,123 +8,105 @@ enum ShipmentStatus {
 }
 
 enum ProcessedMaterialShipmentStatus {
-  pending,
   sentToFactory,
   receivedAtFactory,
   sentToAdmin,
+  pending,
   approved,
   rejected,
 }
 
+// Raw Material Shipment Model
 class RawMaterialShipmentReceived {
   final String id;
+  final String shipmentNumber;
   final String shipmentImage;
   final String wasteTypeId;
   final double weight;
   final String senderId;
   final String recyclingUnitId;
-  final String? shipmentNumber;
   final String? receiptImage;
+  final Map<String, double>? geoLocation;
   final ShipmentStatus status;
   final String? rejectionReason;
   final DateTime createdAt;
   final DateTime updatedAt;
-
-  // Related data (populated when fetched with relations)
+  
+  // Related data
   final String? senderName;
-  final String? wasteTypeName;
   final String? senderMobile;
+  final String? wasteTypeName;
+  final String? recyclingUnitName;
 
   RawMaterialShipmentReceived({
     required this.id,
+    required this.shipmentNumber,
     required this.shipmentImage,
     required this.wasteTypeId,
     required this.weight,
     required this.senderId,
     required this.recyclingUnitId,
-    this.shipmentNumber,
     this.receiptImage,
+    this.geoLocation,
     required this.status,
     this.rejectionReason,
     required this.createdAt,
     required this.updatedAt,
     this.senderName,
-    this.wasteTypeName,
     this.senderMobile,
+    this.wasteTypeName,
+    this.recyclingUnitName,
   });
 
   factory RawMaterialShipmentReceived.fromJson(Map<String, dynamic> json) {
+    Map<String, double>? geoLocation;
+    if (json['geoLocation'] != null) {
+      final geo = json['geoLocation'] as Map<String, dynamic>;
+      geoLocation = {
+        'lat': (geo['lat'] ?? 0).toDouble(),
+        'lng': (geo['lng'] ?? 0).toDouble(),
+      };
+    }
+
     return RawMaterialShipmentReceived(
       id: json['id'] ?? '',
+      shipmentNumber: json['shipmentNumber'] ?? '',
       shipmentImage: json['shipmentImage'] ?? '',
       wasteTypeId: json['wasteTypeId'] ?? '',
       weight: (json['weight'] ?? 0).toDouble(),
       senderId: json['senderId'] ?? '',
       recyclingUnitId: json['recyclingUnitId'] ?? '',
-      shipmentNumber: json['shipmentNumber'],
       receiptImage: json['receiptImage'],
-      status: _parseStatus(json['status']),
+      geoLocation: geoLocation,
+      status: _parseShipmentStatus(json['status']),
       rejectionReason: json['rejectionReason'],
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
       senderName: json['sender']?['fullName'],
-      wasteTypeName: json['wasteType']?['nameAr'] ?? json['wasteType']?['nameEn'],
       senderMobile: json['sender']?['mobileNumber'],
+      wasteTypeName: json['wasteType']?['nameAr'] ?? json['wasteType']?['nameEn'],
+      recyclingUnitName: json['recyclingUnit']?['unitName'],
     );
   }
 
-  static ShipmentStatus _parseStatus(String? status) {
-    switch (status?.toUpperCase()) {
+  static ShipmentStatus _parseShipmentStatus(String? status) {
+    if (status == null) return ShipmentStatus.pending;
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return ShipmentStatus.pending;
       case 'APPROVED':
         return ShipmentStatus.approved;
       case 'REJECTED':
         return ShipmentStatus.rejected;
+      case 'SENT_TO_FACTORY':
+        return ShipmentStatus.sentToFactory;
+      case 'RECEIVED_AT_FACTORY':
+        return ShipmentStatus.receivedAtFactory;
+      case 'SENT_TO_ADMIN':
+        return ShipmentStatus.sentToAdmin;
       default:
         return ShipmentStatus.pending;
     }
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'shipmentImage': shipmentImage,
-      'wasteTypeId': wasteTypeId,
-      'weight': weight,
-      'senderId': senderId,
-      'recyclingUnitId': recyclingUnitId,
-      'shipmentNumber': shipmentNumber,
-      'receiptImage': receiptImage,
-      'status': status.name.toUpperCase(),
-      'rejectionReason': rejectionReason,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
-}
-
-class ShipmentListResponse {
-  final List<RawMaterialShipmentReceived> items;
-  final int total;
-  final int page;
-  final int pageSize;
-
-  ShipmentListResponse({
-    required this.items,
-    required this.total,
-    required this.page,
-    required this.pageSize,
-  });
-
-  factory ShipmentListResponse.fromJson(Map<String, dynamic> json) {
-    return ShipmentListResponse(
-      items: (json['items'] as List<dynamic>?)
-              ?.map((item) => RawMaterialShipmentReceived.fromJson(item))
-              .toList() ??
-          [],
-      total: json['total'] ?? 0,
-      page: json['page'] ?? 1,
-      pageSize: json['pageSize'] ?? 20,
-    );
   }
 }
 
@@ -169,6 +151,7 @@ class ProcessedMaterialShipment {
   final String? materialTypeName;
   final String? tradeName;
   final String? carPlate;
+  final List<ProcessedMaterialShipmentSplit>? splits;
 
   ProcessedMaterialShipment({
     required this.id,
@@ -204,6 +187,7 @@ class ProcessedMaterialShipment {
     this.materialTypeName,
     this.tradeName,
     this.carPlate,
+    this.splits,
   });
 
   factory ProcessedMaterialShipment.fromJson(Map<String, dynamic> json) {
@@ -241,6 +225,11 @@ class ProcessedMaterialShipment {
       materialTypeName: json['materialType']?['nameAr'] ?? json['materialType']?['nameEn'],
       tradeName: json['trade']?['name'],
       carPlate: json['car']?['carPlate'],
+      splits: json['splits'] != null
+          ? (json['splits'] as List<dynamic>)
+              .map((item) => ProcessedMaterialShipmentSplit.fromJson(item as Map<String, dynamic>))
+              .toList()
+          : null,
     );
   }
 
@@ -261,54 +250,31 @@ class ProcessedMaterialShipment {
         return ProcessedMaterialShipmentStatus.pending;
     }
   }
+}
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'shipmentNumber': shipmentNumber,
-      'shipmentImage': shipmentImage,
-      'materialTypeId': materialTypeId,
-      'weight': weight,
-      'carId': carId,
-      'carPlateNumber': carPlateNumber,
-      'driverFirstName': driverFirstName,
-      'driverSecondName': driverSecondName,
-      'driverThirdName': driverThirdName,
-      'receiverId': receiverId,
-      'tradeId': tradeId,
-      'sentPalletsNumber': sentPalletsNumber,
-      'dateOfSending': dateOfSending.toIso8601String(),
-      'receiptFromPress': receiptFromPress,
-      'status': _statusToString(status),
-      'carCheckImage': carCheckImage,
-      'receiptImage': receiptImage,
-      'receivedWeight': receivedWeight,
-      'emptyCarWeight': emptyCarWeight,
-      'plenty': plenty,
-      'plentyReason': plentyReason,
-      'netWeight': netWeight,
-      'factoryUnitId': factoryUnitId,
-      'rejectionReason': rejectionReason,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
+class ShipmentListResponse {
+  final List<RawMaterialShipmentReceived> items;
+  final int total;
+  final int page;
+  final int pageSize;
 
-  static String _statusToString(ProcessedMaterialShipmentStatus status) {
-    switch (status) {
-      case ProcessedMaterialShipmentStatus.pending:
-        return 'PENDING';
-      case ProcessedMaterialShipmentStatus.sentToFactory:
-        return 'SENT_TO_FACTORY';
-      case ProcessedMaterialShipmentStatus.receivedAtFactory:
-        return 'RECEIVED_AT_FACTORY';
-      case ProcessedMaterialShipmentStatus.sentToAdmin:
-        return 'SENT_TO_ADMIN';
-      case ProcessedMaterialShipmentStatus.approved:
-        return 'APPROVED';
-      case ProcessedMaterialShipmentStatus.rejected:
-        return 'REJECTED';
-    }
+  ShipmentListResponse({
+    required this.items,
+    required this.total,
+    required this.page,
+    required this.pageSize,
+  });
+
+  factory ShipmentListResponse.fromJson(Map<String, dynamic> json) {
+    return ShipmentListResponse(
+      items: (json['items'] as List<dynamic>?)
+              ?.map((item) => RawMaterialShipmentReceived.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
+      total: json['total'] ?? 0,
+      page: json['page'] ?? 1,
+      pageSize: json['pageSize'] ?? 20,
+    );
   }
 }
 
@@ -338,3 +304,33 @@ class ProcessedMaterialShipmentListResponse {
   }
 }
 
+class ProcessedMaterialShipmentSplit {
+  final String senderId;
+  final String? senderName;
+  final int pallets;
+  final double weight;
+
+  ProcessedMaterialShipmentSplit({
+    required this.senderId,
+    this.senderName,
+    required this.pallets,
+    required this.weight,
+  });
+
+  factory ProcessedMaterialShipmentSplit.fromJson(Map<String, dynamic> json) {
+    return ProcessedMaterialShipmentSplit(
+      senderId: json['senderId'] ?? '',
+      senderName: json['sender']?['fullName'],
+      pallets: json['pallets'] ?? 0,
+      weight: (json['weight'] ?? 0).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'senderId': senderId,
+      'pallets': pallets,
+      'weight': weight,
+    };
+  }
+}

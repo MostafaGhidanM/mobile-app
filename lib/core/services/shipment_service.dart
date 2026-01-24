@@ -93,26 +93,33 @@ class ShipmentService {
     String? shipmentNumber,
     String? receiptFromPress,
     String status = 'SENT_TO_FACTORY',
+    List<ProcessedMaterialShipmentSplit>? splits,
   }) async {
+    final data = <String, dynamic>{
+      'shipmentImage': shipmentImage,
+      'materialTypeId': materialTypeId,
+      'weight': weight,
+      'carId': carId,
+      'carPlateNumber': carPlateNumber,
+      'driverFirstName': driverFirstName,
+      'driverSecondName': driverSecondName,
+      'driverThirdName': driverThirdName,
+      'receiverId': receiverId,
+      'tradeId': tradeId,
+      'sentPalletsNumber': sentPalletsNumber,
+      'dateOfSending': dateOfSending.toIso8601String(),
+      if (shipmentNumber != null) 'shipmentNumber': shipmentNumber,
+      if (receiptFromPress != null) 'receiptFromPress': receiptFromPress,
+      'status': status,
+    };
+
+    if (splits != null && splits.isNotEmpty) {
+      data['splits'] = splits.map((split) => split.toJson()).toList();
+    }
+
     return await _apiClient.post<ProcessedMaterialShipment>(
       ApiEndpoints.processedMaterialShipmentsSent,
-      data: {
-        'shipmentImage': shipmentImage,
-        'materialTypeId': materialTypeId,
-        'weight': weight,
-        'carId': carId,
-        'carPlateNumber': carPlateNumber,
-        'driverFirstName': driverFirstName,
-        'driverSecondName': driverSecondName,
-        'driverThirdName': driverThirdName,
-        'receiverId': receiverId,
-        'tradeId': tradeId,
-        'sentPalletsNumber': sentPalletsNumber,
-        'dateOfSending': dateOfSending.toIso8601String(),
-        if (shipmentNumber != null) 'shipmentNumber': shipmentNumber,
-        if (receiptFromPress != null) 'receiptFromPress': receiptFromPress,
-        'status': status,
-      },
+      data: data,
       fromJson: (json) => ProcessedMaterialShipment.fromJson(json as Map<String, dynamic>),
     );
   }
