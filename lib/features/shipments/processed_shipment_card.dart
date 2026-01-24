@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/models/shipment.dart';
 import '../../widgets/status_badge.dart';
+import '../../localization/app_localizations.dart';
 
 class ProcessedShipmentCard extends StatelessWidget {
   final ProcessedMaterialShipment shipment;
@@ -12,20 +13,20 @@ class ProcessedShipmentCard extends StatelessWidget {
     required this.onTap,
   }) : super(key: key);
 
-  String _getStatusText(ProcessedMaterialShipmentStatus status) {
+  String _getStatusText(ProcessedMaterialShipmentStatus status, AppLocalizations localizations) {
     switch (status) {
       case ProcessedMaterialShipmentStatus.pending:
-        return 'Pending';
+        return localizations.statusPending;
       case ProcessedMaterialShipmentStatus.sentToFactory:
-        return 'Sent to Factory';
+        return localizations.statusSentToFactory;
       case ProcessedMaterialShipmentStatus.receivedAtFactory:
-        return 'Received at Factory';
+        return localizations.statusReceivedAtFactory;
       case ProcessedMaterialShipmentStatus.sentToAdmin:
-        return 'Sent to Admin';
+        return localizations.statusSentToAdmin;
       case ProcessedMaterialShipmentStatus.approved:
-        return 'Approved';
+        return localizations.statusApproved;
       case ProcessedMaterialShipmentStatus.rejected:
-        return 'Rejected';
+        return localizations.statusRejected;
     }
   }
 
@@ -48,6 +49,7 @@ class ProcessedShipmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -62,7 +64,7 @@ class ProcessedShipmentCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Shipment: ${shipment.shipmentNumber}',
+                      '${localizations.shipment} ${shipment.shipmentNumber}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -70,7 +72,7 @@ class ProcessedShipmentCard extends StatelessWidget {
                     ),
                   ),
                   StatusBadge(
-                    status: _getStatusText(shipment.status),
+                    status: _getStatusText(shipment.status, localizations),
                     color: _getStatusColor(shipment.status),
                   ),
                 ],
@@ -78,18 +80,18 @@ class ProcessedShipmentCard extends StatelessWidget {
               const SizedBox(height: 8),
               if (shipment.materialTypeName != null)
                 Text(
-                  'Material: ${shipment.materialTypeName}',
+                  '${localizations.material} ${shipment.materialTypeName}',
                   style: const TextStyle(fontSize: 14),
                 ),
               const SizedBox(height: 4),
               Text(
-                'Weight: ${shipment.weight} kg',
+                '${localizations.weightLabel}: ${shipment.weight} ${localizations.kg}',
                 style: const TextStyle(fontSize: 14),
               ),
               if (shipment.netWeight != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Net Weight: ${shipment.netWeight!.toStringAsFixed(3)} kg',
+                  '${localizations.netWeight} ${shipment.netWeight!.toStringAsFixed(3)} ${localizations.kg}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -98,26 +100,26 @@ class ProcessedShipmentCard extends StatelessWidget {
               ],
               const SizedBox(height: 4),
               Text(
-                'Date: ${shipment.dateOfSending.year}-${shipment.dateOfSending.month.toString().padLeft(2, '0')}-${shipment.dateOfSending.day.toString().padLeft(2, '0')}',
+                '${localizations.date} ${shipment.dateOfSending.year}-${shipment.dateOfSending.month.toString().padLeft(2, '0')}-${shipment.dateOfSending.day.toString().padLeft(2, '0')}',
                 style: const TextStyle(fontSize: 14),
               ),
               if (shipment.pressUnitName != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'From: ${shipment.pressUnitName}',
+                  '${localizations.from} ${shipment.pressUnitName}',
                   style: const TextStyle(fontSize: 14),
                 ),
               ],
               if (shipment.receiverUnitName != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'To: ${shipment.receiverUnitName}',
+                  '${localizations.to} ${shipment.receiverUnitName}',
                   style: const TextStyle(fontSize: 14),
                 ),
               ],
               const SizedBox(height: 4),
               Text(
-                'Pallets: ${shipment.sentPalletsNumber}',
+                '${localizations.palletsLabel} ${shipment.sentPalletsNumber}',
                 style: const TextStyle(fontSize: 14),
               ),
             ],

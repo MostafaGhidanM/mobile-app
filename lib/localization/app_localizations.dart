@@ -12,12 +12,14 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   Future<bool> load() async {
     String jsonString;
     try {
-      jsonString = await rootBundle.loadString('assets/localization/${locale.languageCode}.json');
+      jsonString = await rootBundle
+          .loadString('assets/localization/${locale.languageCode}.json');
     } catch (e) {
       // Fallback to English if language file not found
       jsonString = await rootBundle.loadString('assets/localization/en.json');
@@ -92,30 +94,40 @@ class AppLocalizations {
   String get palletsNumber => translate('pallets_number');
   String get dateOfSending => translate('date_of_sending');
   String get receiptFromPress => translate('receipt_from_press');
-  String get pleaseSelectMaterialType => translate('please_select_material_type');
+  String get pleaseSelectMaterialType =>
+      translate('please_select_material_type');
   String get pleaseEnterWeight => translate('please_enter_weight');
   String get pleaseEnterValidNumber => translate('please_enter_valid_number');
   String get pleaseSelectCar => translate('please_select_car');
   String get pleaseEnterCarPlate => translate('please_enter_car_plate');
   String get required => translate('required');
-  String get pleaseSelectReceiverUnit => translate('please_select_receiver_unit');
-  String get pleaseEnterReceiverUnitId => translate('please_enter_receiver_unit_id');
+  String get pleaseSelectReceiverUnit =>
+      translate('please_select_receiver_unit');
+  String get pleaseEnterReceiverUnitId =>
+      translate('please_enter_receiver_unit_id');
   String get pleaseSelectTrade => translate('please_select_trade');
   String get pleaseEnterTradeId => translate('please_enter_trade_id');
-  String get pleaseEnterPalletsNumber => translate('please_enter_pallets_number');
-  String get pleaseUploadShipmentImage => translate('please_upload_shipment_image');
-  String get pleaseFillAllRequiredFields => translate('please_fill_all_required_fields');
+  String get pleaseEnterPalletsNumber =>
+      translate('please_enter_pallets_number');
+  String get pleaseUploadShipmentImage =>
+      translate('please_upload_shipment_image');
+  String get pleaseFillAllRequiredFields =>
+      translate('please_fill_all_required_fields');
   String get createShipment => translate('create_shipment');
-  String get processedMaterialShipmentCreated => translate('processed_material_shipment_created');
+  String get processedMaterialShipmentCreated =>
+      translate('processed_material_shipment_created');
   String get optional => translate('optional');
-  String get receiveProcessedShipment => translate('receive_processed_shipment');
+  String get receiveProcessedShipment =>
+      translate('receive_processed_shipment');
   String get shipmentNotFound => translate('shipment_not_found');
   String get pressUnitInformation => translate('press_unit_information');
   String get pressUnitName => translate('press_unit_name');
+  String get shipmentNumber => translate('shipment_number');
   String get weightFromPress => translate('weight_from_press');
   String get driverName => translate('driver_name');
   String get shipmentImageFromPress => translate('shipment_image_from_press');
-  String get factoryReceiptInformation => translate('factory_receipt_information');
+  String get factoryReceiptInformation =>
+      translate('factory_receipt_information');
   String get carCheckImage => translate('car_check_image');
   String get receiptImage => translate('receipt_image');
   String get receivedWeight => translate('received_weight');
@@ -124,20 +136,77 @@ class AppLocalizations {
   String get plentyReason => translate('plenty_reason');
   String get calculatedNetWeight => translate('calculated_net_weight');
   String get receive => translate('receive');
-  String get pleaseEnterReceivedWeight => translate('please_enter_received_weight');
-  String get pleaseEnterEmptyCarWeight => translate('please_enter_empty_car_weight');
-  String get pleaseEnterPlentyPercentage => translate('please_enter_plenty_percentage');
-  String get plentyMustBeBetween0And100 => translate('plenty_must_be_between_0_and_100');
+  String get pleaseEnterReceivedWeight =>
+      translate('please_enter_received_weight');
+  String get pleaseEnterEmptyCarWeight =>
+      translate('please_enter_empty_car_weight');
+  String get pleaseEnterPlentyPercentage =>
+      translate('please_enter_plenty_percentage');
+  String get plentyMustBeBetween0And100 =>
+      translate('plenty_must_be_between_0_and_100');
   String get pleaseUploadBothImages => translate('please_upload_both_images');
   String get factoryUnitIdNotFound => translate('factory_unit_id_not_found');
-  String get shipmentReceivedSuccessfully => translate('shipment_received_successfully');
+  String get shipmentReceivedSuccessfully =>
+      translate('shipment_received_successfully');
   String get errorUploadingImage => translate('error_uploading_image');
-  String get noReceiverUnitsAvailable => translate('no_receiver_units_available');
+  String get noReceiverUnitsAvailable =>
+      translate('no_receiver_units_available');
   String get arabic => translate('arabic');
   String get english => translate('english');
+  String get shipmentSentSuccessfully =>
+      translate('shipment_sent_successfully');
+  String get split => translate('split');
+  String get splits => translate('splits');
+  String get splitBySender => translate('split_by_sender');
+  String get addSplit => translate('add_split');
+  String get removeSplit => translate('remove_split');
+  String get selectSender => translate('select_sender');
+  String get pleaseSelectSender => translate('please_select_sender');
+  String get pleaseAddAtLeastOneSplit =>
+      translate('please_add_at_least_one_split');
+  String get pleaseSelectSenderForSplit =>
+      translate('please_select_sender_for_split');
+  String get totalSplitWeight => translate('total_split_weight');
+  String get doesNotMatchShipmentWeight =>
+      translate('does_not_match_shipment_weight');
+  String get pallets => translate('pallets');
+  String get pleaseEnterPallets => translate('please_enter_pallets');
+  String get totals => translate('totals');
+  String get totalPallets => translate('total_pallets');
+  String get totalWeight => translate('total_weight');
+  String get shipmentWeight => translate('shipment_weight');
+  String get totalsMatch => translate('totals_match');
+  String get totalsDoNotMatch => translate('totals_do_not_match');
+  String get weightLabel => translate('weight_label');
+  String get netWeight => translate('net_weight');
+  String get material => translate('material');
+  String get date => translate('date');
+  String get from => translate('from');
+  String get to => translate('to');
+  String get palletsLabel => translate('pallets_label');
+  String get shipment => translate('shipment');
+  String get failedToUploadImage => translate('failed_to_upload_image');
+  String get failedToGetNextShipmentNumber =>
+      translate('failed_to_get_next_shipment_number');
+  String get failedToReceiveShipment => translate('failed_to_receive_shipment');
+  String get errorLoadingData => translate('error_loading_data');
+  String get kg => translate('kg');
+  String get pleaseEnterValidPositiveNumber =>
+      translate('please_enter_valid_positive_number');
+  String get unknown => translate('unknown');
+  String get statusPending => translate('status_pending');
+  String get statusApproved => translate('status_approved');
+  String get statusRejected => translate('status_rejected');
+  String get statusSentToFactory => translate('status_sent_to_factory');
+  String get statusReceivedAtFactory => translate('status_received_at_factory');
+  String get statusSentToAdmin => translate('status_sent_to_admin');
+  String get statusOpen => translate('status_open');
+  String get statusInProgress => translate('status_in_progress');
+  String get statusClosed => translate('status_closed');
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -155,4 +224,3 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
-

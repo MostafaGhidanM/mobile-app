@@ -4,7 +4,7 @@ class StatusBadge extends StatelessWidget {
   final String status;
   final Color color;
 
-  const StatusBadge({
+  StatusBadge({
     Key? key,
     required this.status,
     required this.color,

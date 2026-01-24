@@ -157,9 +157,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingData = false);
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading data: $e'),
+            content: Text('${localizations.errorLoadingData} $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -264,9 +265,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
       } else {
         if (mounted) {
           setState(() => _isLoading = false);
+          final localizations = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error?.message ?? 'Failed to upload image'),
+              content: Text(response.error?.message ?? localizations.failedToUploadImage),
               backgroundColor: Colors.red,
             ),
           );
@@ -275,9 +277,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error uploading image: $e'),
+            content: Text('${localizations.errorUploadingImage}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -301,9 +304,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
       } else {
         if (mounted) {
           setState(() => _isLoading = false);
+          final localizations = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error?.message ?? 'Failed to upload image'),
+              content: Text(response.error?.message ?? localizations.failedToUploadImage),
               backgroundColor: Colors.red,
             ),
           );
@@ -312,9 +316,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error uploading image: $e'),
+            content: Text('${localizations.errorUploadingImage}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -349,8 +354,8 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     // Validate splits
     if (_splits.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one split'),
+        SnackBar(
+          content: Text(localizations.pleaseAddAtLeastOneSplit),
           backgroundColor: Colors.red,
         ),
       );
@@ -362,7 +367,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
       if (_splits[i]['senderId'] == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Please select a sender for split ${i + 1}'),
+            content: Text('${localizations.pleaseSelectSenderForSplit} ${i + 1}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -376,7 +381,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
     if ((totalSplitWeight - totalWeight).abs() > 0.01) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Total split weight (${totalSplitWeight.toStringAsFixed(2)} kg) does not match shipment weight (${totalWeight.toStringAsFixed(2)} kg)'),
+          content: Text('${localizations.totalSplitWeight} (${totalSplitWeight.toStringAsFixed(2)} ${localizations.kg}) ${localizations.doesNotMatchShipmentWeight} (${totalWeight.toStringAsFixed(2)} ${localizations.kg})'),
           backgroundColor: Colors.red,
         ),
       );
@@ -392,7 +397,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(nextNumberResponse.error?.message ?? 'Failed to get next shipment number'),
+              content: Text(nextNumberResponse.error?.message ?? localizations.failedToGetNextShipmentNumber),
               backgroundColor: Colors.red,
             ),
           );
@@ -449,9 +454,10 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
       }
     } catch (e) {
       if (mounted) {
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${localizations.error} $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -719,7 +725,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                                 // Create a temporary trade with just the ID
                                 if (value.isNotEmpty) {
                                   setState(() {
-                                    _selectedTrade = Trade(id: value, name: 'Unknown');
+                                    _selectedTrade = Trade(id: value, name: localizations.unknown);
                                   });
                                 } else {
                                   setState(() => _selectedTrade = null);
@@ -736,7 +742,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       
                       // Splits Section
                       Text(
-                        '${localizations.palletsNumber} Split by Sender *',
+                        '${localizations.palletsNumber} ${localizations.splitBySender} *',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -756,14 +762,14 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          'Split ${index + 1}',
+                                          '${localizations.split} ${index + 1}',
                                           style: Theme.of(context).textTheme.titleSmall,
                                         ),
                                         if (_splits.length > 1)
                                           IconButton(
                                             icon: const Icon(Icons.delete, color: Colors.red),
                                             onPressed: () => _removeSplit(index),
-                                            tooltip: 'Remove split',
+                                            tooltip: localizations.removeSplit,
                                           ),
                                       ],
                                     ),
@@ -792,14 +798,14 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                                         }
                                       },
                                       decoration: InputDecoration(
-                                        labelText: 'Select Sender *',
+                                        labelText: '${localizations.selectSender} *',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                       ),
                                       validator: (value) {
                                         if (value == null) {
-                                          return 'Please select a sender';
+                                          return localizations.pleaseSelectSender;
                                         }
                                         return null;
                                       },
@@ -809,15 +815,15 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                                     // Pallets Input
                                     CustomTextField(
                                       controller: split['palletsController'] as TextEditingController,
-                                      label: 'Pallets *',
+                                      label: '${localizations.pallets} *',
                                       keyboardType: TextInputType.number,
                                       onChanged: (_) => setState(() {}), // Trigger rebuild to update totals
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Please enter pallets';
+                                          return localizations.pleaseEnterPallets;
                                         }
                                         if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                                          return 'Please enter a valid positive number';
+                                          return localizations.pleaseEnterValidPositiveNumber;
                                         }
                                         return null;
                                       },
@@ -826,16 +832,16 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                                     // Weight Input
                                     CustomTextField(
                                       controller: split['weightController'] as TextEditingController,
-                                      label: 'Weight (kg) *',
+                                      label: '${localizations.weightLabel} (${localizations.kg}) *',
                                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                                       onChanged: (_) => setState(() {}), // Trigger rebuild to update totals
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Please enter weight';
+                                          return localizations.pleaseEnterWeight;
                                         }
                                         final weight = double.tryParse(value);
                                         if (weight == null || weight <= 0) {
-                                          return 'Please enter a valid positive number';
+                                          return localizations.pleaseEnterValidPositiveNumber;
                                         }
                                         return null;
                                       },
@@ -852,7 +858,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       OutlinedButton.icon(
                         onPressed: _addSplit,
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Split'),
+                        label: Text(localizations.addSplit),
                       ),
                       const SizedBox(height: 16),
                       // Totals Display
@@ -864,21 +870,21 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Totals:',
+                                localizations.totals,
                                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text('Total Pallets: ${_calculateTotalSplitPallets()}'),
-                              Text('Total Weight: ${_calculateTotalSplitWeight().toStringAsFixed(2)} kg'),
-                              Text('Shipment Weight: ${_weightController.text.isEmpty ? "0" : _weightController.text} kg'),
+                              Text('${localizations.totalPallets} ${_calculateTotalSplitPallets()}'),
+                              Text('${localizations.totalWeight} ${_calculateTotalSplitWeight().toStringAsFixed(2)} ${localizations.kg}'),
+                              Text('${localizations.shipmentWeight} ${_weightController.text.isEmpty ? "0" : _weightController.text} ${localizations.kg}'),
                               const SizedBox(height: 4),
                               if (_weightController.text.isNotEmpty)
                                 Text(
                                   _calculateTotalSplitWeight().toStringAsFixed(2) == double.tryParse(_weightController.text)?.toStringAsFixed(2)
-                                      ? '✓ Totals match'
-                                      : '⚠ Totals do not match',
+                                      ? localizations.totalsMatch
+                                      : localizations.totalsDoNotMatch,
                                   style: TextStyle(
                                     color: _calculateTotalSplitWeight().toStringAsFixed(2) == double.tryParse(_weightController.text)?.toStringAsFixed(2)
                                         ? Colors.green

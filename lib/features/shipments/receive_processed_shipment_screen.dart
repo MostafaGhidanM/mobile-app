@@ -76,7 +76,7 @@ class _ReceiveProcessedShipmentScreenState extends State<ReceiveProcessedShipmen
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Receive Processed Material Shipments'),
+          title: Text(localizations.receiveProcessedShipment),
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -106,14 +106,14 @@ class _ReceiveProcessedShipmentScreenState extends State<ReceiveProcessedShipmen
                             return Card(
                               margin: const EdgeInsets.only(bottom: 12),
                               child: ListTile(
-                                title: Text('Shipment: ${shipment.shipmentNumber}'),
+                                title: Text('${localizations.shipment} ${shipment.shipmentNumber}'),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Weight: ${shipment.weight} kg'),
-                                    Text('Material: ${shipment.materialTypeName ?? 'N/A'}'),
-                                    Text('From: ${shipment.pressUnitName ?? 'N/A'}'),
-                                    Text('Date: ${shipment.dateOfSending.year}-${shipment.dateOfSending.month}-${shipment.dateOfSending.day}'),
+                                    Text('${localizations.weightLabel}: ${shipment.weight} ${localizations.kg}'),
+                                    Text('${localizations.material} ${shipment.materialTypeName ?? localizations.unknown}'),
+                                    Text('${localizations.from} ${shipment.pressUnitName ?? localizations.unknown}'),
+                                    Text('${localizations.date} ${shipment.dateOfSending.year}-${shipment.dateOfSending.month}-${shipment.dateOfSending.day}'),
                                   ],
                                 ),
                                 trailing: const Icon(Icons.arrow_forward_ios),
@@ -273,9 +273,10 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error uploading image: $e'),
+            content: Text('${localizations.errorUploadingImage}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -299,9 +300,10 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
       } else {
         if (mounted) {
           setState(() => _isLoading = false);
+          final localizations = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error?.message ?? 'Failed to upload image'),
+              content: Text(response.error?.message ?? localizations.failedToUploadImage),
               backgroundColor: Colors.red,
             ),
           );
@@ -310,9 +312,10 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error uploading image: $e'),
+            content: Text('${localizations.errorUploadingImage}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -321,14 +324,15 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
   }
 
   Future<void> _submitReceive() async {
+    final localizations = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_carCheckImageUrl == null || _receiptImageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please upload both car check image and receipt image'),
+        SnackBar(
+          content: Text(localizations.pleaseUploadBothImages),
           backgroundColor: Colors.red,
         ),
       );
@@ -343,8 +347,8 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
     
     if (factoryUnitId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Factory unit ID not found'),
+        SnackBar(
+          content: Text(localizations.factoryUnitIdNotFound),
           backgroundColor: Colors.red,
         ),
       );
@@ -367,8 +371,8 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
 
       if (response.isSuccess && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Shipment received successfully'),
+          SnackBar(
+            content: Text(localizations.shipmentReceivedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -377,7 +381,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error?.message ?? 'Failed to receive shipment'),
+              content: Text(response.error?.message ?? localizations.failedToReceiveShipment),
               backgroundColor: Colors.red,
             ),
           );
@@ -388,7 +392,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${localizations.error} $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -419,13 +423,13 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadShipment,
-                          child: const Text('Retry'),
+                          child: Text(localizations.retry),
                         ),
                       ],
                     ),
                   )
                 : _shipment == null
-                    ? const Center(child: Text('Shipment not found'))
+                    ? Center(child: Text(localizations.shipmentNotFound))
                     : SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: Form(
@@ -435,7 +439,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                             children: [
                               // Section: Press Unit Information (Disabled)
                               Text(
-                                'Press Unit Information',
+                                localizations.pressUnitInformation,
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -445,7 +449,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Press Unit Name
                               CustomTextField(
                                 controller: TextEditingController(text: _shipment!.pressUnitName ?? 'N/A'),
-                                label: 'Press Unit Name',
+                                label: localizations.pressUnitName,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
@@ -453,7 +457,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Shipment Number
                               CustomTextField(
                                 controller: TextEditingController(text: _shipment!.shipmentNumber),
-                                label: 'Shipment Number',
+                                label: localizations.shipmentNumber,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
@@ -461,15 +465,15 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Material Type
                               CustomTextField(
                                 controller: TextEditingController(text: _shipment!.materialTypeName ?? 'N/A'),
-                                label: 'Material Type',
+                                label: localizations.materialType,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
                               
                               // Weight (from press)
                               CustomTextField(
-                                controller: TextEditingController(text: '${_shipment!.weight} kg'),
-                                label: 'Weight (from Press)',
+                                controller: TextEditingController(text: '${_shipment!.weight} ${localizations.kg}'),
+                                label: localizations.weightFromPress,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
@@ -479,7 +483,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                 controller: TextEditingController(
                                   text: '${_shipment!.dateOfSending.year}-${_shipment!.dateOfSending.month.toString().padLeft(2, '0')}-${_shipment!.dateOfSending.day.toString().padLeft(2, '0')}'
                                 ),
-                                label: 'Date of Sending',
+                                label: localizations.dateOfSending,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
@@ -487,7 +491,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Pallets Number
                               CustomTextField(
                                 controller: TextEditingController(text: '${_shipment!.sentPalletsNumber}'),
-                                label: 'Pallets Number',
+                                label: localizations.palletsNumber,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
@@ -495,7 +499,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Car Plate Number
                               CustomTextField(
                                 controller: TextEditingController(text: _shipment!.carPlateNumber),
-                                label: 'Car Plate Number',
+                                label: localizations.carPlateNumber,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
@@ -505,7 +509,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                 controller: TextEditingController(
                                   text: '${_shipment!.driverFirstName} ${_shipment!.driverSecondName} ${_shipment!.driverThirdName}'
                                 ),
-                                label: 'Driver Name',
+                                label: localizations.driverName,
                                 enabled: false,
                               ),
                               const SizedBox(height: 16),
@@ -516,7 +520,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Shipment Image (from Press)',
+                                      localizations.shipmentImageFromPress,
                                       style: Theme.of(context).textTheme.labelLarge,
                                     ),
                                     const SizedBox(height: 8),
@@ -538,7 +542,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Receipt from Press',
+                                      localizations.receiptFromPress,
                                       style: Theme.of(context).textTheme.labelLarge,
                                     ),
                                     const SizedBox(height: 8),
@@ -558,7 +562,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               
                               // Section: Factory Input Fields (Editable)
                               Text(
-                                'Factory Receipt Information',
+                                localizations.factoryReceiptInformation,
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -567,7 +571,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               
                               // Car Check Image
                               ImagePickerWidget(
-                                label: 'Car Check Image *',
+                                label: '${localizations.carCheckImage} *',
                                 imagePath: _carCheckImagePath,
                                 onImagePicked: _uploadCarCheckImage,
                               ),
@@ -575,7 +579,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               
                               // Receipt Image
                               ImagePickerWidget(
-                                label: 'Receipt Image *',
+                                label: '${localizations.receiptImage} *',
                                 imagePath: _receiptImagePath,
                                 onImagePicked: _uploadReceiptImage,
                               ),
@@ -584,15 +588,15 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Received Weight
                               CustomTextField(
                                 controller: _receivedWeightController,
-                                label: 'Received Weight (kg) *',
+                                label: '${localizations.receivedWeight} (${localizations.kg}) *',
                                 keyboardType: TextInputType.number,
                                 onChanged: (_) => _calculateNetWeight(),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter received weight';
+                                    return localizations.pleaseEnterReceivedWeight;
                                   }
                                   if (double.tryParse(value) == null) {
-                                    return 'Please enter a valid number';
+                                    return localizations.pleaseEnterValidNumber;
                                   }
                                   return null;
                                 },
@@ -602,15 +606,15 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Empty Car Weight
                               CustomTextField(
                                 controller: _emptyCarWeightController,
-                                label: 'Empty Car Weight (kg) *',
+                                label: '${localizations.emptyCarWeight} (${localizations.kg}) *',
                                 keyboardType: TextInputType.number,
                                 onChanged: (_) => _calculateNetWeight(),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter empty car weight';
+                                    return localizations.pleaseEnterEmptyCarWeight;
                                   }
                                   if (double.tryParse(value) == null) {
-                                    return 'Please enter a valid number';
+                                    return localizations.pleaseEnterValidNumber;
                                   }
                                   return null;
                                 },
@@ -620,7 +624,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Plenty
                               CustomTextField(
                                 controller: _plentyController,
-                                label: 'Plenty (%) *',
+                                label: '${localizations.plenty} (%) *',
                                 keyboardType: TextInputType.number,
                                 onChanged: (_) => _calculateNetWeight(),
                                 validator: (value) {
@@ -629,7 +633,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   }
                                   final plenty = double.tryParse(value);
                                   if (plenty == null) {
-                                    return 'Please enter a valid number';
+                                    return localizations.pleaseEnterValidNumber;
                                   }
                                   if (plenty < 0 || plenty > 100) {
                                     return 'Plenty must be between 0 and 100';
@@ -642,7 +646,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Plenty Reason
                               CustomTextField(
                                 controller: _plentyReasonController,
-                                label: 'Plenty Reason',
+                                label: localizations.plentyReason,
                               ),
                               const SizedBox(height: 16),
                               
@@ -653,7 +657,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   child: Padding(
                                     padding: const EdgeInsets.all(12),
                                     child: Text(
-                                      'Calculated Net Weight: ${_calculatedNetWeight!.toStringAsFixed(3)} kg',
+                                      '${localizations.calculatedNetWeight} ${_calculatedNetWeight!.toStringAsFixed(3)} ${localizations.kg}',
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -669,13 +673,13 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   Expanded(
                                     child: OutlinedButton(
                                       onPressed: _isLoading ? null : () => context.pop(),
-                                      child: const Text('Cancel'),
+                                      child: Text(localizations.cancel),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: CustomButton(
-                                      text: 'Receive',
+                                      text: localizations.receive,
                                       onPressed: _isLoading ? null : _submitReceive,
                                       isLoading: _isLoading,
                                     ),

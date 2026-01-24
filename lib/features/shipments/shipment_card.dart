@@ -12,20 +12,20 @@ class ShipmentCard extends StatelessWidget {
     this.onTap,
   }) : super(key: key);
 
-  String _getStatusText(ShipmentStatus status, bool isRTL) {
+  String _getStatusText(ShipmentStatus status, AppLocalizations localizations) {
     switch (status) {
       case ShipmentStatus.pending:
-        return isRTL ? 'مفتوح' : 'Open';
+        return localizations.statusOpen;
       case ShipmentStatus.approved:
-        return isRTL ? 'قيد العمل' : 'In Progress';
+        return localizations.statusInProgress;
       case ShipmentStatus.rejected:
-        return isRTL ? 'مغلق' : 'Closed';
+        return localizations.statusClosed;
       case ShipmentStatus.sentToFactory:
-        return isRTL ? 'مرسل للمصنع' : 'Sent to Factory';
+        return localizations.statusSentToFactory;
       case ShipmentStatus.receivedAtFactory:
-        return isRTL ? 'مستلم في المصنع' : 'Received at Factory';
+        return localizations.statusReceivedAtFactory;
       case ShipmentStatus.sentToAdmin:
-        return isRTL ? 'مرسل للإدارة' : 'Sent to Admin';
+        return localizations.statusSentToAdmin;
     }
   }
 
@@ -72,7 +72,7 @@ class ShipmentCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      _getStatusText(shipment.status, isRTL),
+                      _getStatusText(shipment.status, localizations),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -134,7 +134,7 @@ class ShipmentCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${shipment.weight.toStringAsFixed(0)} ${isRTL ? 'كيلو' : 'kg'}',
+                          '${shipment.weight.toStringAsFixed(0)} ${localizations.kg}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
