@@ -110,7 +110,7 @@ class _ReceiveProcessedShipmentScreenState extends State<ReceiveProcessedShipmen
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Weight: ${shipment.weight} tons'),
+                                    Text('Weight: ${shipment.weight} kg'),
                                     Text('Material: ${shipment.materialTypeName ?? 'N/A'}'),
                                     Text('From: ${shipment.pressUnitName ?? 'N/A'}'),
                                     Text('Date: ${shipment.dateOfSending.year}-${shipment.dateOfSending.month}-${shipment.dateOfSending.day}'),
@@ -468,7 +468,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               
                               // Weight (from press)
                               CustomTextField(
-                                controller: TextEditingController(text: '${_shipment!.weight} tons'),
+                                controller: TextEditingController(text: '${_shipment!.weight} kg'),
                                 label: 'Weight (from Press)',
                                 enabled: false,
                               ),
@@ -584,7 +584,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Received Weight
                               CustomTextField(
                                 controller: _receivedWeightController,
-                                label: 'Received Weight (tons) *',
+                                label: 'Received Weight (kg) *',
                                 keyboardType: TextInputType.number,
                                 onChanged: (_) => _calculateNetWeight(),
                                 validator: (value) {
@@ -602,7 +602,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               // Empty Car Weight
                               CustomTextField(
                                 controller: _emptyCarWeightController,
-                                label: 'Empty Car Weight (tons) *',
+                                label: 'Empty Car Weight (kg) *',
                                 keyboardType: TextInputType.number,
                                 onChanged: (_) => _calculateNetWeight(),
                                 validator: (value) {
@@ -653,7 +653,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   child: Padding(
                                     padding: const EdgeInsets.all(12),
                                     child: Text(
-                                      'Calculated Net Weight: ${_calculatedNetWeight!.toStringAsFixed(3)} tons',
+                                      'Calculated Net Weight: ${_calculatedNetWeight!.toStringAsFixed(3)} kg',
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,

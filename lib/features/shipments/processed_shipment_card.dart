@@ -83,13 +83,13 @@ class ProcessedShipmentCard extends StatelessWidget {
                 ),
               const SizedBox(height: 4),
               Text(
-                'Weight: ${shipment.weight} tons',
+                'Weight: ${shipment.weight} kg',
                 style: const TextStyle(fontSize: 14),
               ),
               if (shipment.netWeight != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Net Weight: ${shipment.netWeight!.toStringAsFixed(3)} tons',
+                  'Net Weight: ${shipment.netWeight!.toStringAsFixed(3)} kg',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

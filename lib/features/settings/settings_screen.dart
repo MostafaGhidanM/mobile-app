@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../core/utils/storage.dart';
+import '../../main.dart';
 import 'package:go_router/go_router.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -263,10 +265,13 @@ class SettingsScreen extends StatelessWidget {
                   title: const Text('العربية'),
                   value: const Locale('ar'),
                   groupValue: currentLocale,
-                  onChanged: (Locale? value) {
+                  onChanged: (Locale? value) async {
                     if (value != null) {
-                      // TODO: Change app language
-                      Navigator.pop(context);
+                      await StorageService.setString('app_language', value.languageCode);
+                      MyAppState.changeLocale(value);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
                     }
                   },
                 ),
@@ -274,10 +279,13 @@ class SettingsScreen extends StatelessWidget {
                   title: const Text('English'),
                   value: const Locale('en'),
                   groupValue: currentLocale,
-                  onChanged: (Locale? value) {
+                  onChanged: (Locale? value) async {
                     if (value != null) {
-                      // TODO: Change app language
-                      Navigator.pop(context);
+                      await StorageService.setString('app_language', value.languageCode);
+                      MyAppState.changeLocale(value);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
                     }
                   },
                 ),

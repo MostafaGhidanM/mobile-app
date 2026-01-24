@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:developer' as developer;
 import 'core/theme/app_theme.dart';
 import 'core/utils/constants.dart';
+import 'core/utils/storage.dart';
 import 'localization/app_localizations.dart';
 import 'features/auth/auth_provider.dart';
 import 'features/auth/login_screen.dart';
@@ -62,21 +63,17 @@ class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<MyApp> createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Locale _locale = const Locale('ar'); // Default to Arabic
-
-  void _setLocale(Locale locale) {
-    setState(() {
-      _locale = locale;
-    });
-  }
+  static MyAppState? _instance;
 
   @override
   void initState() {
     super.initState();
+    _instance = this;
     WidgetsBinding.instance.addObserver(this);
     _loadSavedLocale();
     _initializeNotifications();
@@ -85,7 +82,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _instance = null;
     super.dispose();
+  }
+
+  void _setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
+
+  static void changeLocale(Locale locale) {
+    _instance?._setLocale(locale);
   }
 
   @override
@@ -117,8 +125,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<Locale?> _getSavedLocale() async {
-    // Load from SharedPreferences if needed
-    return null; // Default to Arabic
+    try {
+      await StorageService.init();
+      final savedLanguage = StorageService.getString('app_language');
+      if (savedLanguage != null && (savedLanguage == 'en' || savedLanguage == 'ar')) {
+        return Locale(savedLanguage);
+      }
+    } catch (e) {
+      // Ignore errors, use default
+    }
+    return const Locale('ar'); // Default to Arabic
   }
 
   @override

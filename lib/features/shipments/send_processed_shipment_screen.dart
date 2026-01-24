@@ -528,7 +528,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
                       // Weight
                       CustomTextField(
                         controller: _weightController,
-                        label: '${localizations.weightTons} *',
+                        label: '${localizations.weightKg} *',
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) {

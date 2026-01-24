@@ -79,7 +79,7 @@ class AppLocalizations {
   String get shippingDate => translate('shipping_date');
   String get sendProcessedShipment => translate('send_processed_shipment');
   String get materialType => translate('material_type');
-  String get weightTons => translate('weight_tons');
+  String get weightKg => translate('weight_kg');
   String get car => translate('car');
   String get carPlateNumber => translate('car_plate_number');
   String get driverFirstName => translate('driver_first_name');
@@ -108,6 +108,33 @@ class AppLocalizations {
   String get createShipment => translate('create_shipment');
   String get processedMaterialShipmentCreated => translate('processed_material_shipment_created');
   String get optional => translate('optional');
+  String get receiveProcessedShipment => translate('receive_processed_shipment');
+  String get shipmentNotFound => translate('shipment_not_found');
+  String get pressUnitInformation => translate('press_unit_information');
+  String get pressUnitName => translate('press_unit_name');
+  String get weightFromPress => translate('weight_from_press');
+  String get driverName => translate('driver_name');
+  String get shipmentImageFromPress => translate('shipment_image_from_press');
+  String get factoryReceiptInformation => translate('factory_receipt_information');
+  String get carCheckImage => translate('car_check_image');
+  String get receiptImage => translate('receipt_image');
+  String get receivedWeight => translate('received_weight');
+  String get emptyCarWeight => translate('empty_car_weight');
+  String get plenty => translate('plenty');
+  String get plentyReason => translate('plenty_reason');
+  String get calculatedNetWeight => translate('calculated_net_weight');
+  String get receive => translate('receive');
+  String get pleaseEnterReceivedWeight => translate('please_enter_received_weight');
+  String get pleaseEnterEmptyCarWeight => translate('please_enter_empty_car_weight');
+  String get pleaseEnterPlentyPercentage => translate('please_enter_plenty_percentage');
+  String get plentyMustBeBetween0And100 => translate('plenty_must_be_between_0_and_100');
+  String get pleaseUploadBothImages => translate('please_upload_both_images');
+  String get factoryUnitIdNotFound => translate('factory_unit_id_not_found');
+  String get shipmentReceivedSuccessfully => translate('shipment_received_successfully');
+  String get errorUploadingImage => translate('error_uploading_image');
+  String get noReceiverUnitsAvailable => translate('no_receiver_units_available');
+  String get arabic => translate('arabic');
+  String get english => translate('english');
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
