@@ -33,8 +33,65 @@ class AppLocalizations {
   }
 
   String? translateOrNull(String key) {
-    return _localizedStrings[key];
+    final v = _localizedStrings[key];
+    return v is String ? v : null;
   }
+
+  String translateWithParams(String key, Map<String, String> params) {
+    String s = translate(key);
+    for (var e in params.entries) {
+      s = s.replaceAll('{{${e.key}}}', e.value);
+    }
+    return s;
+  }
+
+  String? getNotificationTitle(String type, Map<String, String>? meta) {
+    final key = 'notifications.types.$type.title';
+    if (translateOrNull(key) == null) return null;
+    final params = meta ?? {};
+    return translateWithParams(key, params);
+  }
+
+  String? getNotificationMessage(String type, Map<String, String>? meta) {
+    if (meta == null) return null;
+    final variant = meta['variant'] ?? '';
+    String msgKey;
+    if (type == 'SHIPMENT_APPROVED') {
+      if (variant == 'processed_factory') {
+        msgKey = 'notifications.types.SHIPMENT_APPROVED.message_processed_factory';
+      } else if (variant == 'processed_press') {
+        msgKey = 'notifications.types.SHIPMENT_APPROVED.message_processed_press';
+      } else {
+        msgKey = 'notifications.types.SHIPMENT_APPROVED.message';
+      }
+    } else if (type == 'PROCESSED_SHIPMENT_SENT') {
+      if (variant == 'receiver') {
+        msgKey = 'notifications.types.PROCESSED_SHIPMENT_SENT.message_receiver';
+      } else if (variant == 'factory_to_press') {
+        msgKey = 'notifications.types.PROCESSED_SHIPMENT_SENT.message_factory_to_press';
+      } else {
+        msgKey = 'notifications.types.PROCESSED_SHIPMENT_SENT.message_receiver';
+      }
+    } else {
+      msgKey = 'notifications.types.$type.message';
+    }
+    if (translateOrNull(msgKey) == null) return null;
+    final params = Map<String, String>.from(meta)..remove('variant');
+    return translateWithParams(msgKey, params);
+  }
+
+  // Notifications UI and relative date
+  String get notificationsTitle => translate('notifications_title');
+  String get notificationsMarkAllRead => translate('notifications_mark_all_read');
+  String get notificationsLoading => translate('notifications_loading');
+  String get notificationsNoNotifications => translate('notifications_no_notifications');
+  String get notificationsJustNow => translate('notifications_just_now');
+  String notificationsMinutesAgo(int count) =>
+      translateWithParams('notifications_minutes_ago', {'count': count.toString()});
+  String notificationsHoursAgo(int count) =>
+      translateWithParams('notifications_hours_ago', {'count': count.toString()});
+  String notificationsDaysAgo(int count) =>
+      translateWithParams('notifications_days_ago', {'count': count.toString()});
 
   // Helper getter for common translations
   String get appName => translate('app_name');

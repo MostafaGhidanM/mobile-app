@@ -160,18 +160,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, AppLocalizations loc) {
     final now = DateTime.now();
     final difference = now.difference(date);
 
     if (difference.inMinutes < 1) {
-      return 'Just now';
+      return loc.notificationsJustNow;
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
+      return loc.notificationsMinutesAgo(difference.inMinutes);
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
+      return loc.notificationsHoursAgo(difference.inHours);
     } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
+      return loc.notificationsDaysAgo(difference.inDays);
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
@@ -207,13 +207,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Notifications'),
+          title: Text(localizations.notificationsTitle),
           actions: [
             if (_unreadCount > 0)
               IconButton(
                 icon: const Icon(Icons.done_all),
                 onPressed: _markAllAsRead,
-                tooltip: 'Mark all as read',
+                tooltip: localizations.notificationsMarkAllRead,
               ),
           ],
         ),
@@ -236,7 +236,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () => _loadNotifications(refresh: true),
-                            child: const Text('Retry'),
+                            child: Text(localizations.retry),
                           ),
                         ],
                       ),
@@ -249,7 +249,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
                               const SizedBox(height: 16),
                               Text(
-                                'No notifications',
+                                localizations.notificationsNoNotifications,
                                 style: TextStyle(
                                   fontSize: 18,
                                   color: Colors.grey[600],
@@ -316,7 +316,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              notification.title,
+                                              localizations.getNotificationTitle(notification.type, notification.meta) ?? notification.title,
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: notification.isRead
@@ -326,7 +326,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              notification.message,
+                                              localizations.getNotificationMessage(notification.type, notification.meta) ?? notification.message,
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 color: Colors.grey[700],
@@ -334,7 +334,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                             ),
                                             const SizedBox(height: 8),
                                             Text(
-                                              _formatDate(notification.createdAt),
+                                              _formatDate(notification.createdAt, localizations),
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey[500],

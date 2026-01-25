@@ -5,6 +5,7 @@ class Notification {
   final String title;
   final String message;
   final String type;
+  final Map<String, String>? meta;
   final bool isRead;
   final DateTime createdAt;
 
@@ -15,11 +16,18 @@ class Notification {
     required this.title,
     required this.message,
     required this.type,
+    this.meta,
     required this.isRead,
     required this.createdAt,
   });
 
   factory Notification.fromJson(Map<String, dynamic> json) {
+    Map<String, String>? meta;
+    if (json['meta'] != null && json['meta'] is Map) {
+      meta = (json['meta'] as Map).map(
+        (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
+      );
+    }
     return Notification(
       id: json['id'] ?? '',
       userId: json['userId'],
@@ -27,6 +35,7 @@ class Notification {
       title: json['title'] ?? '',
       message: json['message'] ?? '',
       type: json['type'] ?? '',
+      meta: meta,
       isRead: json['isRead'] ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
@@ -42,6 +51,7 @@ class Notification {
       'title': title,
       'message': message,
       'type': type,
+      'meta': meta,
       'isRead': isRead,
       'createdAt': createdAt.toIso8601String(),
     };
@@ -54,6 +64,7 @@ class Notification {
     String? title,
     String? message,
     String? type,
+    Map<String, String>? meta,
     bool? isRead,
     DateTime? createdAt,
   }) {
@@ -64,6 +75,7 @@ class Notification {
       title: title ?? this.title,
       message: message ?? this.message,
       type: type ?? this.type,
+      meta: meta ?? this.meta,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
     );
