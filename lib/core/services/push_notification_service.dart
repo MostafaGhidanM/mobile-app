@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import '../models/notification.dart' as models;
+import '../../localization/app_localizations.dart';
+import '../utils/storage.dart';
 
 class PushNotificationService {
   static const String _lastNotificationIdKey = 'last_notification_id';
@@ -132,6 +134,18 @@ class PushNotificationService {
   }
 
   Future<void> _showNotification(models.Notification notification) async {
+    // Use localized title/message when available (matches notification dropdown and in-app list)
+    String title = notification.title;
+    String message = notification.message;
+    try {
+      final lang = StorageService.getString('app_language') ?? 'ar';
+      final loc = await AppLocalizations.delegate.load(Locale(lang));
+      title = loc.getNotificationTitle(notification.type, notification.meta) ?? title;
+      message = loc.getNotificationMessage(notification.type, notification.meta) ?? message;
+    } catch (_) {
+      // Keep raw title/message on any error (e.g. assets not loaded)
+    }
+
     const androidDetails = AndroidNotificationDetails(
       'notifications',
       'Notifications',
@@ -154,8 +168,8 @@ class PushNotificationService {
 
     await _localNotifications.show(
       notification.id.hashCode,
-      notification.title,
-      notification.message,
+      title,
+      message,
       details,
       payload: notification.id,
     );
