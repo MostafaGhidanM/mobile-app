@@ -134,16 +134,19 @@ class PushNotificationService {
   }
 
   Future<void> _showNotification(models.Notification notification) async {
-    // Use localized title/message when available (matches notification dropdown and in-app list)
+    // Use localized title/message when available (matches notification dropdown and in-app list).
+    // Timeout so we never block showing the notification (e.g. when app reopened from cold start).
     String title = notification.title;
     String message = notification.message;
     try {
       final lang = StorageService.getString('app_language') ?? 'ar';
-      final loc = await AppLocalizations.delegate.load(Locale(lang));
+      final loc = await AppLocalizations.delegate
+          .load(Locale(lang))
+          .timeout(const Duration(seconds: 3));
       title = loc.getNotificationTitle(notification.type, notification.meta) ?? title;
       message = loc.getNotificationMessage(notification.type, notification.meta) ?? message;
     } catch (_) {
-      // Keep raw title/message on any error (e.g. assets not loaded)
+      // Keep raw title/message on timeout, error, or assets not ready
     }
 
     const androidDetails = AndroidNotificationDetails(
