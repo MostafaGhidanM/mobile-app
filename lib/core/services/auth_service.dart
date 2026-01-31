@@ -33,7 +33,7 @@ class AuthService {
           loginData.accessToken,
         );
         
-        // Store user/unit data
+        // Store user/unit/sender data
         if (loginData.user != null) {
           await StorageService.setJson(
             AppConstants.userDataKey,
@@ -44,10 +44,18 @@ class AuthService {
             AppConstants.userDataKey,
             loginData.recyclingUnit!.toJson(),
           );
-          // Store phoneNumber separately for background notification tasks
           await StorageService.setString(
             'phoneNumber',
             loginData.recyclingUnit!.phoneNumber,
+          );
+        } else if (loginData.sender != null) {
+          await StorageService.setJson(
+            AppConstants.userDataKey,
+            {...?loginData.sender, 'role': 'SENDER'},
+          );
+          await StorageService.setString(
+            'phoneNumber',
+            loginData.sender!['mobileNumber']?.toString() ?? '',
           );
         }
       }
@@ -90,11 +98,13 @@ class AuthService {
 class LoginResponse {
   final User? user;
   final RecyclingUnit? recyclingUnit;
+  final Map<String, dynamic>? sender;
   final String accessToken;
 
   LoginResponse({
     this.user,
     this.recyclingUnit,
+    this.sender,
     required this.accessToken,
   });
 
@@ -104,11 +114,15 @@ class LoginResponse {
       recyclingUnit: json['recyclingUnit'] != null
           ? RecyclingUnit.fromJson(json['recyclingUnit'])
           : null,
+      sender: json['sender'] != null
+          ? Map<String, dynamic>.from(json['sender'] as Map)
+          : null,
       accessToken: json['accessToken'] ?? '',
     );
   }
 
   bool get isRecyclingUnit => recyclingUnit != null;
   bool get isUser => user != null;
+  bool get isSender => sender != null;
 }
 

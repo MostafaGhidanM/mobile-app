@@ -299,7 +299,7 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
                                   return ProcessedShipmentCard(
                                     shipment: _filteredShipments[index],
                                     onTap: () {
-                                      // TODO: Navigate to shipment details
+                                      context.push('/shipments/receive-processed/${_filteredShipments[index].id}');
                                     },
                                   );
                                 },

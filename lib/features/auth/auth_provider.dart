@@ -6,6 +6,7 @@ import '../../core/services/recycling_unit_service.dart';
 import '../../core/services/push_notification_service.dart';
 import '../../core/models/user.dart';
 import '../../core/models/recycling_unit.dart';
+import '../../core/models/sender.dart';
 import '../../core/utils/storage.dart';
 import '../../core/utils/constants.dart';
 
@@ -21,15 +22,18 @@ class AuthProvider with ChangeNotifier {
   
   User? _user;
   RecyclingUnit? _recyclingUnit;
+  Sender? _sender;
   bool _isLoading = false;
   String? _errorMessage;
 
   User? get user => _user;
   RecyclingUnit? get recyclingUnit => _recyclingUnit;
+  Sender? get sender => _sender;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  bool get isAuthenticated => _user != null || _recyclingUnit != null;
+  bool get isAuthenticated => _user != null || _recyclingUnit != null || _sender != null;
   bool get isRecyclingUnit => _recyclingUnit != null;
+  bool get isSender => _sender != null;
 
   Future<bool> login(String mobile, String password) async {
     _isLoading = true;
@@ -42,12 +46,15 @@ class AuthProvider with ChangeNotifier {
       if (response.isSuccess && response.data != null) {
         _user = response.data!.user;
         _recyclingUnit = response.data!.recyclingUnit;
-        
+        _sender = response.data!.sender != null
+            ? Sender.fromJson(response.data!.sender!)
+            : null;
+
         // #region agent log
-        _debugLog('auth_provider.dart:43', 'Login response received', {'hasUser': _user != null, 'hasRecyclingUnit': _recyclingUnit != null, 'unitType': _recyclingUnit?.unitType?.toString(), 'unitId': _recyclingUnit?.id}, 'E');
+        _debugLog('auth_provider.dart:43', 'Login response received', {'hasUser': _user != null, 'hasRecyclingUnit': _recyclingUnit != null, 'hasSender': _sender != null, 'unitType': _recyclingUnit?.unitType?.toString(), 'unitId': _recyclingUnit?.id}, 'E');
         // #endregion
-        
-        // If unitType is missing, try to fetch it from the API
+
+        // If unitType is missing, try to fetch it from the API (only for recycling unit)
         if (_recyclingUnit != null && _recyclingUnit!.unitType == null) {
           // #region agent log
           _debugLog('auth_provider.dart:48', 'Fetching unit details - unitType is null', {'unitId': _recyclingUnit!.id}, 'E');
@@ -117,6 +124,7 @@ class AuthProvider with ChangeNotifier {
     await _authService.logout();
     _user = null;
     _recyclingUnit = null;
+    _sender = null;
     _errorMessage = null;
     notifyListeners();
   }
@@ -128,11 +136,12 @@ class AuthProvider with ChangeNotifier {
     if (userData != null && token != null) {
       if (userData['role'] == 'RECYCLING_UNIT') {
         _recyclingUnit = RecyclingUnit.fromJson(userData);
+      } else if (userData['role'] == 'SENDER') {
+        _sender = Sender.fromJson(userData);
       } else {
         _user = User.fromJson(userData);
       }
       notifyListeners();
-    } else {
     }
   }
 

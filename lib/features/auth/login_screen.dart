@@ -243,6 +243,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // Register as Sender Button
+                  OutlinedButton(
+                    onPressed: () {
+                      try {
+                        context.push('/register-sender');
+                      } catch (e, stackTrace) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Navigation error: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text(
+                      isRTL ? 'تسجيل كمرسل' : 'Register as sender',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   // Language Switch
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

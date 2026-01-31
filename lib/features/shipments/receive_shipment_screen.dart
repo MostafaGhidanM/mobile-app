@@ -10,6 +10,7 @@ import '../../core/services/sender_service.dart';
 import '../../core/services/upload_service.dart';
 import '../../core/models/waste_type.dart';
 import '../../core/models/sender.dart';
+import '../../core/models/shipment.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
@@ -44,6 +45,15 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
   bool _isLoadingData = true;
   Map<String, double>? _shipmentLocation;
 
+  // Complete-from-sender flow
+  String _receiveMode = 'new'; // 'new' | 'complete_from_sender'
+  List<RawMaterialShipmentReceived> _senderCreatedShipments = [];
+  RawMaterialShipmentReceived? _selectedShipmentForComplete;
+  final _completeWeightController = TextEditingController();
+  String? _completeReceiptImagePath;
+  String? _completeReceiptImageUrl;
+  bool _loadingSenderShipments = false;
+
   @override
   void initState() {
     super.initState();
@@ -53,7 +63,133 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
   @override
   void dispose() {
     _weightController.dispose();
+    _completeWeightController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSenderCreatedShipments() async {
+    setState(() => _loadingSenderShipments = true);
+    try {
+      final response = await _shipmentService.listShipments(
+        page: 1,
+        pageSize: 100,
+        createdBy: 'SENDER',
+      );
+      if (mounted) {
+        setState(() {
+          _senderCreatedShipments = response.isSuccess && response.data != null
+              ? response.data!.items
+              : [];
+          _loadingSenderShipments = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingSenderShipments = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadCompleteReceiptImage(dynamic imageData) async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _uploadService.uploadImage(imageData);
+      if (response.isSuccess && response.data != null) {
+        setState(() {
+          _completeReceiptImageUrl = response.data!.url;
+          _isLoading = false;
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.error?.message ?? 'Failed to upload image'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _submitCompleteFromSender() async {
+    if (_selectedShipmentForComplete == null) return;
+    if (_completeReceiptImageUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(Localizations.localeOf(context).languageCode == 'ar'
+              ? 'يرجى رفع صورة كارتة الميزان'
+              : 'Please upload scale card image'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    final weight = double.tryParse(_completeWeightController.text);
+    if (weight == null || weight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(Localizations.localeOf(context).languageCode == 'ar'
+              ? 'أدخل الوزن صحيحاً'
+              : 'Enter valid weight'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final response = await _shipmentService.completeShipmentFromSender(
+        shipmentId: _selectedShipmentForComplete!.id,
+        weight: weight,
+        receiptImage: _completeReceiptImageUrl!,
+      );
+      if (response.isSuccess && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(Localizations.localeOf(context).languageCode == 'ar'
+                ? 'تم استلام الشحنة بنجاح'
+                : 'Shipment completed successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {
+          _selectedShipmentForComplete = null;
+          _completeWeightController.clear();
+          _completeReceiptImageUrl = null;
+          _completeReceiptImagePath = null;
+        });
+        _loadSenderCreatedShipments();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.error?.message ?? 'Failed to complete shipment'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _loadData() async {
@@ -282,19 +418,204 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
         appBar: AppBar(
           title: Text(localizations.receiveShipment),
         ),
-        body: _isLoadingData
+        body: _isLoadingData && _receiveMode == 'new'
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Shipment Image
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Mode selector: Receive new | Complete from sender
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _receiveMode = 'new';
+                                _selectedShipmentForComplete = null;
+                              });
+                            },
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: _receiveMode == 'new'
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                  : null,
+                            ),
+                            child: Text(
+                              isRTL ? 'استلام شحنة جديدة' : 'Receive new shipment',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _receiveMode = 'complete_from_sender';
+                                _selectedShipmentForComplete = null;
+                              });
+                              _loadSenderCreatedShipments();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: _receiveMode == 'complete_from_sender'
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                  : null,
+                            ),
+                            child: Text(
+                              isRTL ? 'استكمال شحنة من مرسل' : 'Complete from sender',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Content based on mode
+                  Expanded(
+                    child: _receiveMode == 'complete_from_sender'
+                        ? _buildCompleteFromSenderContent(localizations, isRTL)
+                        : SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: _buildReceiveNewFormChildren(localizations, isRTL),
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildCompleteFromSenderContent(AppLocalizations localizations, bool isRTL) {
+    if (_selectedShipmentForComplete != null) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              isRTL ? 'استكمال الشحنة' : 'Complete shipment',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            _buildReadOnlyField(isRTL ? 'مرسل الشحنة' : 'Sender', _selectedShipmentForComplete!.senderName ?? ''),
+            _buildReadOnlyField(isRTL ? 'نوع المخلفات' : 'Waste type', _selectedShipmentForComplete!.wasteTypeName ?? ''),
+            _buildReadOnlyField(isRTL ? 'الوزن (من المرسل)' : 'Weight (from sender)', '${_selectedShipmentForComplete!.weight} kg'),
+            const SizedBox(height: 20),
+            CustomTextField(
+              label: isRTL ? 'الوزن كيلو *' : 'Weight (kg) *',
+              hint: '0',
+              controller: _completeWeightController,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 20),
+            ImagePickerWidget(
+              imagePath: _completeReceiptImagePath,
+              label: isRTL ? 'صورة كارتة الميزان من المرسل *' : 'Scale card image *',
+              onImagePicked: (fileOrBytes) async {
+                setState(() {
+                  if (kIsWeb && fileOrBytes is Uint8List) {
+                  } else if (!kIsWeb && fileOrBytes is File) {
+                    _completeReceiptImagePath = fileOrBytes.path;
+                  }
+                });
+                await _uploadCompleteReceiptImage(fileOrBytes);
+              },
+              icon: Icons.scale,
+            ),
+            const SizedBox(height: 24),
+            CustomButton(
+              text: isRTL ? 'استلام' : 'Complete',
+              onPressed: _submitCompleteFromSender,
+              isLoading: _isLoading,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _selectedShipmentForComplete = null;
+                  _completeWeightController.clear();
+                  _completeReceiptImageUrl = null;
+                  _completeReceiptImagePath = null;
+                });
+              },
+              child: Text(isRTL ? 'رجوع للقائمة' : 'Back to list'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_loadingSenderShipments) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_senderCreatedShipments.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            isRTL ? 'لا توجد شحنات من مرسلين بانتظار الاستكمال' : 'No shipments from senders awaiting completion',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _senderCreatedShipments.length,
+      itemBuilder: (context, index) {
+        final s = _senderCreatedShipments[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            title: Text(s.senderName ?? 'Sender'),
+            subtitle: Text(
+              '${isRTL ? 'الوزن' : 'Weight'}: ${s.weight} kg • #${s.shipmentNumber}',
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              setState(() {
+                _selectedShipmentForComplete = s;
+                _completeWeightController.text = s.weight.toStringAsFixed(0);
+              });
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReadOnlyField(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildReceiveNewFormChildren(AppLocalizations localizations, bool isRTL) {
+    return [
+                      // صورة استلام الشحنة من المرسل
                       ImagePickerWidget(
                         imagePath: _shipmentImagePath,
-                        label: localizations.translate('shipment_image'),
+                        label: localizations.translate('raw_shipment_image'),
                         captureLocation: true,
                         onLocationCaptured: (location) {
                           setState(() {
@@ -347,10 +668,10 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      // Receipt Image
+                      // صورة كارتة الميزان من المرسل
                       ImagePickerWidget(
                         imagePath: _receiptImagePath,
-                        label: localizations.translate('receipt_image') ?? 'Receipt Image',
+                        label: localizations.translate('raw_scale_card_image'),
                         onImagePicked: (fileOrBytes) async {
                           setState(() {
                             if (kIsWeb && fileOrBytes is Uint8List) {
@@ -365,9 +686,9 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                         helperText: localizations.translate('max_file_size'),
                       ),
                       const SizedBox(height: 20),
-                      // Weight Input
+                      // الوزن كيلو
                       CustomTextField(
-                        label: '${localizations.translate('weight_kg')} *',
+                        label: '${localizations.translate('raw_weight_kg')} *',
                         hint: '0',
                         controller: _weightController,
                         keyboardType: TextInputType.number,
@@ -388,7 +709,7 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                         isExpanded: true,
                         menuMaxHeight: 300,
                         decoration: InputDecoration(
-                          labelText: '${localizations.translate('shipment_sender')} *',
+                          labelText: '${localizations.translate('raw_sender')} *',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -429,18 +750,13 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                         ),
                       ),
                       const SizedBox(height: 32),
-                      // Submit Button
+                      // استلام
                       CustomButton(
-                        text: localizations.submit,
+                        text: localizations.translate('raw_receive_button'),
                         onPressed: _submitForm,
                         isLoading: _isLoading,
                       ),
-                    ],
-                  ),
-                ),
-              ),
-      ),
-    );
+    ];
   }
 }
 

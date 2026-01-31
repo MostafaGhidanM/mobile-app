@@ -30,6 +30,39 @@ class SenderService {
     );
   }
 
+  /// Self-registration (no unit assignment). Call POST /api/senders/register. No auth required.
+  Future<ApiResponse<Map<String, dynamic>>> registerSender(Sender sender, String password) async {
+    final data = {...sender.toCreateJson(), 'password': password};
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.sendersRegister,
+      data: data,
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+    if (response.isSuccess && response.data != null) {
+      final senderData = response.data!['sender'];
+      if (senderData != null) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          message: response.message,
+          data: Map<String, dynamic>.from(senderData as Map),
+        );
+      }
+    }
+    return ApiResponse<Map<String, dynamic>>(
+      success: response.isSuccess,
+      message: response.message,
+      error: response.error,
+    );
+  }
+
+  /// Sender credit (stock): approved raw − processed splits. Auth: SENDER.
+  Future<ApiResponse<Map<String, dynamic>>> getMyCredit() async {
+    return await _apiClient.get<Map<String, dynamic>>(
+      ApiEndpoints.sendersMeCredit,
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+  }
+
   Future<ApiResponse<Sender>> getSenderById(String id) async {
     return await _apiClient.get<Sender>(
       ApiEndpoints.senderById(id),

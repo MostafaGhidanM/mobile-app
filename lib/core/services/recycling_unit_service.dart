@@ -287,6 +287,31 @@ class RecyclingUnitService {
     );
   }
 
+  /// List PRESS units for sender (when sending shipment to press). Auth: SENDER.
+  Future<ApiResponse<List<RecyclingUnit>>> getPressUnitsForSender() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiEndpoints.sendersMePressUnits,
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+    if (response.isSuccess && response.data != null) {
+      final data = response.data!;
+      final itemsList = data['items'] as List<dynamic>?;
+      final items = (itemsList ?? [])
+          .map((e) => RecyclingUnit.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return ApiResponse<List<RecyclingUnit>>(
+        success: true,
+        data: items,
+        message: response.message,
+      );
+    }
+    return ApiResponse<List<RecyclingUnit>>(
+      success: false,
+      error: response.error,
+      message: response.message,
+    );
+  }
+
   Future<ApiResponse<Map<String, dynamic>>> getPoints() async {
     return await _apiClient.get<Map<String, dynamic>>(
       ApiEndpoints.recyclingUnitsPoints,

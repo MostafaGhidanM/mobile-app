@@ -11,6 +11,7 @@ class ShipmentService {
     int pageSize = 20,
     String? senderId,
     String? wasteTypeId,
+    String? createdBy,
   }) async {
     final queryParams = <String, dynamic>{
       'page': page,
@@ -19,6 +20,7 @@ class ShipmentService {
 
     if (senderId != null) queryParams['senderId'] = senderId;
     if (wasteTypeId != null) queryParams['wasteTypeId'] = wasteTypeId;
+    if (createdBy != null) queryParams['createdBy'] = createdBy;
 
     return await _apiClient.get<ShipmentListResponse>(
       ApiEndpoints.shipments,
@@ -62,6 +64,45 @@ class ShipmentService {
         if (shipmentNumber != null) 'shipmentNumber': shipmentNumber,
         if (receiptImage != null) 'receiptImage': receiptImage,
         if (geoLocation != null) 'geoLocation': geoLocation,
+      },
+      fromJson: (json) => RawMaterialShipmentReceived.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Create raw shipment as sender (send to press). Auth must be SENDER; backend uses senderId from token.
+  Future<ApiResponse<RawMaterialShipmentReceived>> createShipmentAsSender({
+    required String shipmentImage,
+    required String wasteTypeId,
+    required double weight,
+    required String recyclingUnitId,
+    String? receiptImage,
+    String? sourceDescription,
+  }) async {
+    return await _apiClient.post<RawMaterialShipmentReceived>(
+      ApiEndpoints.shipments,
+      data: {
+        'shipmentImage': shipmentImage,
+        'wasteTypeId': wasteTypeId,
+        'weight': weight,
+        'recyclingUnitId': recyclingUnitId,
+        if (receiptImage != null) 'receiptImage': receiptImage,
+        if (sourceDescription != null && sourceDescription.isNotEmpty) 'sourceDescription': sourceDescription,
+      },
+      fromJson: (json) => RawMaterialShipmentReceived.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Complete a raw shipment that was created by sender (press fills weight + receipt image).
+  Future<ApiResponse<RawMaterialShipmentReceived>> completeShipmentFromSender({
+    required String shipmentId,
+    required double weight,
+    required String receiptImage,
+  }) async {
+    return await _apiClient.patch<RawMaterialShipmentReceived>(
+      ApiEndpoints.shipmentComplete(shipmentId),
+      data: {
+        'weight': weight,
+        'receiptImage': receiptImage,
       },
       fromJson: (json) => RawMaterialShipmentReceived.fromJson(json as Map<String, dynamic>),
     );
@@ -224,6 +265,22 @@ class ShipmentService {
       success: false,
       error: response.error,
       message: response.message,
+    );
+  }
+
+  /// Factory adds plenty (and plentyReason) when shipment is RECEIVED_AT_FACTORY (in progress).
+  Future<ApiResponse<ProcessedMaterialShipment>> updatePlenty({
+    required String shipmentId,
+    required double plenty,
+    String? plentyReason,
+  }) async {
+    return await _apiClient.patch<ProcessedMaterialShipment>(
+      ApiEndpoints.processedMaterialShipmentPlenty(shipmentId),
+      data: {
+        'plenty': plenty,
+        if (plentyReason != null) 'plentyReason': plentyReason,
+      },
+      fromJson: (json) => ProcessedMaterialShipment.fromJson(json as Map<String, dynamic>),
     );
   }
 }

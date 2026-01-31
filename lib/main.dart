@@ -13,11 +13,14 @@ import 'features/auth/auth_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/shipments/shipments_list_screen.dart';
+import 'features/shipments/raw_shipment_detail_screen.dart';
 import 'features/shipments/receive_shipment_screen.dart';
+import 'features/shipments/send_shipment_to_press_screen.dart';
 import 'features/shipments/send_processed_shipment_screen.dart';
 import 'features/shipments/receive_processed_shipment_screen.dart';
 import 'features/shipments/processed_shipments_list_screen.dart';
 import 'features/senders/register_sender_screen.dart';
+import 'features/auth/register_sender_self_screen.dart';
 import 'features/cars/register_car_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/auth/register_unit_screen.dart';
@@ -211,8 +214,19 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const ShipmentsListScreen(),
     ),
     GoRoute(
+      path: '/shipments/raw/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return RawShipmentDetailScreen(shipmentId: id);
+      },
+    ),
+    GoRoute(
       path: '/shipments/receive',
       builder: (context, state) => const ReceiveShipmentScreen(),
+    ),
+    GoRoute(
+      path: '/shipments/send-to-press',
+      builder: (context, state) => const SendShipmentToPressScreen(),
     ),
     GoRoute(
       path: '/shipments/send-processed',
@@ -248,6 +262,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/register-unit',
       builder: (context, state) => const RegisterUnitScreen(),
+    ),
+    GoRoute(
+      path: '/register-sender',
+      builder: (context, state) => const RegisterSenderSelfScreen(),
     ),
     GoRoute(
       path: '/notifications',

@@ -193,6 +193,7 @@ class AppLocalizations {
   String get plentyReason => translate('plenty_reason');
   String get calculatedNetWeight => translate('calculated_net_weight');
   String get receive => translate('receive');
+  String? get submitPlenty => translateOrNull('submit_plenty');
   String get pleaseEnterReceivedWeight =>
       translate('please_enter_received_weight');
   String get pleaseEnterEmptyCarWeight =>

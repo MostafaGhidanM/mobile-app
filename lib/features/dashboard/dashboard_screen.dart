@@ -9,6 +9,7 @@ import '../../widgets/custom_button.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/notification_badge.dart';
 import '../../core/services/recycling_unit_service.dart';
+import '../../core/services/sender_service.dart';
 import '../../core/models/recycling_unit.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,6 +22,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final RecyclingUnitService _recyclingUnitService = RecyclingUnitService();
+  final SenderService _senderService = SenderService();
   double? _credit;
   bool _loadingCredit = false;
 
@@ -33,28 +35,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadCredit() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final unit = authProvider.recyclingUnit;
-
-    // #region agent log
-    try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:31","message":"_loadCredit called","data":{"unitIsNull":unit==null,"unitType":unit?.unitType?.toString(),"unitTypeEnum":unit?.unitType==UnitType.press},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"})}\n', mode: FileMode.append); } catch (_) {}
-    // #endregion
-
-    // Load credit (stock) for PRESS units only
-    // Credit is based on approved raw material shipments (1 kg = 1 credit)
+    final isSender = authProvider.isSender;
     final isPress = unit?.unitType == UnitType.press;
-    
-    // #region agent log
-    try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:40","message":"Unit type check result","data":{"isPress":isPress,"unitTypeValue":unit?.unitType?.toString(),"pressEnum":UnitType.press.toString()},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"})}\n', mode: FileMode.append); } catch (_) {}
-    // #endregion
-    
-    if (isPress) {
+
+    // Load credit (stock) for PRESS: raw received approved − processed sent approved; for SENDER: approved raw − processed splits
+    if (isSender) {
       setState(() => _loadingCredit = true);
       try {
-        final creditResponse = await _recyclingUnitService.getCredit();
-        
-        // #region agent log
-        try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:47","message":"Credit API response","data":{"isSuccess":creditResponse.isSuccess,"hasData":creditResponse.data!=null,"creditValue":creditResponse.data?['credit']},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"})}\n', mode: FileMode.append); } catch (_) {}
-        // #endregion
-        
+        final creditResponse = await _senderService.getMyCredit();
         if (creditResponse.isSuccess && creditResponse.data != null) {
           final creditValue = creditResponse.data!['credit'];
           setState(() {
@@ -62,23 +50,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _loadingCredit = false;
           });
         } else {
-          // If API call fails, set credit to 0
           setState(() {
             _credit = 0.0;
             _loadingCredit = false;
           });
         }
       } catch (e) {
-        // #region agent log
-        try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:62","message":"Credit API error","data":{"error":e.toString()},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"})}\n', mode: FileMode.append); } catch (_) {}
-        // #endregion
+        setState(() {
+          _credit = 0.0;
+          _loadingCredit = false;
+        });
+      }
+      return;
+    }
+
+    if (isPress) {
+      setState(() => _loadingCredit = true);
+      try {
+        final creditResponse = await _recyclingUnitService.getCredit();
+        if (creditResponse.isSuccess && creditResponse.data != null) {
+          final creditValue = creditResponse.data!['credit'];
+          setState(() {
+            _credit = creditValue != null ? (creditValue as num).toDouble() : 0.0;
+            _loadingCredit = false;
+          });
+        } else {
+          setState(() {
+            _credit = 0.0;
+            _loadingCredit = false;
+          });
+        }
+      } catch (e) {
         setState(() {
           _credit = 0.0;
           _loadingCredit = false;
         });
       }
     } else {
-      // Not a PRESS unit, no credit
       _credit = null;
     }
   }
@@ -89,6 +97,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final isRTL = Localizations.localeOf(context).languageCode == 'ar';
     final unit = authProvider.recyclingUnit;
+    final sender = authProvider.sender;
+    final isSender = authProvider.isSender;
 
     return Directionality(
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
@@ -99,11 +109,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Text(
-                unit?.unitName ?? 'Recycling Unit',
+                isSender ? (sender?.fullName ?? 'Sender') : (unit?.unitName ?? 'Recycling Unit'),
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
-                unit?.unitOwnerName ?? '',
+                isSender ? (isRTL ? 'مرسل' : 'Sender') : (unit?.unitOwnerName ?? ''),
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
               ),
             ],
@@ -159,14 +169,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-              // Stock/Credit Card (for PRESS units only)
-              // Shows stock based on approved raw material shipments (1 kg = 1 credit)
+              // Stock/Credit Card (for PRESS units and SENDER)
+              // PRESS: raw received approved − processed sent approved; SENDER: approved raw − processed splits (رصيد)
               Builder(
                 builder: (context) {
-                  final showStock = unit?.unitType == UnitType.press;
-                  // #region agent log
-                  try { final f = File(r'c:\Users\5eert\Desktop\alpha green\.cursor\debug.log'); f.writeAsStringSync('${jsonEncode({"location":"dashboard_screen.dart:162","message":"Stock card visibility check","data":{"showStock":showStock,"unitType":unit?.unitType?.toString(),"creditValue":_credit},"timestamp":DateTime.now().millisecondsSinceEpoch,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"})}\n', mode: FileMode.append); } catch (_) {}
-                  // #endregion
+                  final showStock = (unit?.unitType == UnitType.press) || isSender;
                   if (!showStock) return const SizedBox.shrink();
                   return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -194,7 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            localizations.inventory,
+                            isSender ? (isRTL ? 'رصيد' : 'Stock') : localizations.inventory,
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -245,6 +252,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                   children: [
+                    // Sender: Send shipment to press
+                    if (isSender)
+                      _QuickActionCard(
+                        icon: Icons.upload,
+                        label: isRTL ? 'إرسال شحنة إلى المكبس' : 'Send shipment to press',
+                        onTap: () => context.push('/shipments/send-to-press'),
+                      ),
                     // PRESS units: Receive Raw Shipment
                     if (unit?.unitType == UnitType.press)
                       _QuickActionCard(
@@ -282,12 +296,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         // TODO: Navigate to supply requests
                       },
                     ),
-                    // All units: Register Vehicle
-                    _QuickActionCard(
-                      icon: Icons.directions_car,
-                      label: localizations.registerVehicle,
-                      onTap: () => context.push('/cars/register'),
-                    ),
+                    // PRESS only: Register Vehicle (item 13)
+                    if (unit?.unitType == UnitType.press)
+                      _QuickActionCard(
+                        icon: Icons.directions_car,
+                        label: localizations.registerVehicle,
+                        onTap: () => context.push('/cars/register'),
+                      ),
                     // PRESS units: Register Sender
                     if (unit?.unitType == UnitType.press)
                       _QuickActionCard(

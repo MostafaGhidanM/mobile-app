@@ -15,11 +15,11 @@ class ShipmentCard extends StatelessWidget {
   String _getStatusText(ShipmentStatus status, AppLocalizations localizations) {
     switch (status) {
       case ShipmentStatus.pending:
-        return localizations.statusOpen;
+        return localizations.translate('raw_status_sent_to_press');
       case ShipmentStatus.approved:
-        return localizations.statusApproved; // Raw shipments: approved = موافق عليه
+        return localizations.translate('raw_status_approved');
       case ShipmentStatus.rejected:
-        return localizations.statusClosed;
+        return localizations.translate('raw_status_rejected');
       case ShipmentStatus.sentToFactory:
         return localizations.statusSentToFactory;
       case ShipmentStatus.receivedAtFactory:

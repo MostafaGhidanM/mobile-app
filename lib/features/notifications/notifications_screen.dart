@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/models/notification.dart' as models;
 import '../../features/auth/auth_provider.dart';
@@ -294,6 +295,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 onTap: () {
                                   if (!notification.isRead) {
                                     _markAsRead(notification);
+                                  }
+                                  final shipmentId = notification.meta?['shipmentId'];
+                                  final shipmentType = notification.meta?['shipmentType'];
+                                  if (shipmentId != null && shipmentId.isNotEmpty) {
+                                    if (shipmentType == 'processed') {
+                                      context.push('/shipments/receive-processed/$shipmentId');
+                                    } else {
+                                      context.push('/shipments/raw/$shipmentId');
+                                    }
                                   }
                                 },
                                 child: Container(

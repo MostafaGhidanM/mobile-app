@@ -16,17 +16,17 @@ class ProcessedShipmentCard extends StatelessWidget {
   String _getStatusText(ProcessedMaterialShipmentStatus status, AppLocalizations localizations) {
     switch (status) {
       case ProcessedMaterialShipmentStatus.pending:
-        return localizations.statusPending;
+        return localizations.translate('processed_status_sent_to_factory');
       case ProcessedMaterialShipmentStatus.sentToFactory:
-        return localizations.statusSentToFactory;
+        return localizations.translate('processed_status_sent_to_factory');
       case ProcessedMaterialShipmentStatus.receivedAtFactory:
-        return localizations.statusReceivedAtFactory;
+        return localizations.translate('processed_status_in_progress');
       case ProcessedMaterialShipmentStatus.sentToAdmin:
-        return localizations.statusSentToAdmin;
+        return localizations.translate('processed_status_completed');
       case ProcessedMaterialShipmentStatus.approved:
-        return localizations.statusApproved;
+        return localizations.translate('processed_status_approved');
       case ProcessedMaterialShipmentStatus.rejected:
-        return localizations.statusRejected;
+        return localizations.translate('processed_status_rejected');
     }
   }
 

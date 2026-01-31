@@ -280,7 +280,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                               return ShipmentCard(
                                 shipment: _filteredShipments[index],
                                 onTap: () {
-                                  // TODO: Navigate to shipment details
+                                  context.push('/shipments/raw/${_filteredShipments[index].id}');
                                 },
                               );
                             },

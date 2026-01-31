@@ -10,10 +10,14 @@ class ApiEndpoints {
   // Shipments
   static const String shipments = '/raw-material-shipments-received';
   static String shipmentById(String id) => '$shipments/$id';
+  static String shipmentComplete(String id) => '$shipments/$id/complete';
   static const String shipmentsNextNumber = '$shipments/next-number';
 
   // Senders
   static const String senders = '/senders';
+  static const String sendersRegister = '$senders/register';
+  static const String sendersMePressUnits = '$senders/me/press-units';
+  static const String sendersMeCredit = '$senders/me/credit';
   static String senderById(String id) => '$senders/$id';
   static const String assignedSenders = '$senders/assigned';
 
@@ -48,6 +52,7 @@ class ApiEndpoints {
   static const String processedMaterialShipmentsSent = '/processed-material-shipments-sent';
   static String processedMaterialShipmentById(String id) => '$processedMaterialShipmentsSent/$id';
   static String processedMaterialShipmentReceive(String id) => '$processedMaterialShipmentsSent/$id/receive';
+  static String processedMaterialShipmentPlenty(String id) => '$processedMaterialShipmentsSent/$id/plenty';
   static const String processedMaterialShipmentsPendingReceipt = '$processedMaterialShipmentsSent/pending-receipt';
   static const String processedMaterialShipmentsReceived = '$processedMaterialShipmentsSent/received';
   static const String processedMaterialShipmentsNextNumber = '$processedMaterialShipmentsSent/next-number';
