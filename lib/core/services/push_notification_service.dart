@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import '../services/notification_service.dart';
 import '../models/notification.dart' as models;
 import '../../localization/app_localizations.dart';
 import '../utils/storage.dart';
+import '../utils/constants.dart';
+import 'background_notification_task.dart';
 
 class PushNotificationService {
   static const String _lastNotificationIdKey = 'last_notification_id';
@@ -24,6 +27,40 @@ class PushNotificationService {
     final service = PushNotificationService.instance;
     await service._initializeLocalNotifications();
     service._startForegroundPolling();
+    await registerBackgroundTaskIfLoggedIn();
+  }
+
+  /// Register periodic background task to fetch notifications when app is closed (no FCM).
+  /// Call after login and on app start; runs every ~15 min minimum on Android.
+  static Future<void> registerBackgroundTaskIfLoggedIn() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(AppConstants.accessTokenKey);
+      String? phoneNumber = prefs.getString('phoneNumber');
+      if (phoneNumber == null) {
+        final userDataStr = prefs.getString('userData');
+        if (userDataStr != null) {
+          try {
+            final userData = jsonDecode(userDataStr) as Map<String, dynamic>?;
+            phoneNumber = userData?['phoneNumber'] as String?;
+          } catch (_) {}
+        }
+      }
+      if (token == null || token.isEmpty || phoneNumber == null) return;
+      await Workmanager().registerPeriodicTask(
+        notificationCheckTaskName,
+        notificationCheckTaskName,
+        frequency: const Duration(minutes: 15),
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+      );
+    } catch (_) {}
+  }
+
+  /// Cancel background notification task (e.g. on logout).
+  static Future<void> cancelBackgroundTask() async {
+    try {
+      await Workmanager().cancelByUniqueName(notificationCheckTaskName);
+    } catch (_) {}
   }
 
   Future<void> _initializeLocalNotifications() async {

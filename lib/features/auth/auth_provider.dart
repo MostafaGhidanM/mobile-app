@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/recycling_unit_service.dart';
+import '../../core/services/push_notification_service.dart';
 import '../../core/models/user.dart';
 import '../../core/models/recycling_unit.dart';
 import '../../core/utils/storage.dart';
@@ -112,6 +113,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await PushNotificationService.cancelBackgroundTask();
     await _authService.logout();
     _user = null;
     _recyclingUnit = null;

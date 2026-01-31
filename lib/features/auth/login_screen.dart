@@ -4,6 +4,7 @@ import '../../localization/app_localizations.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../core/utils/storage.dart';
+import '../../core/services/push_notification_service.dart';
 import '../../main.dart';
 import 'auth_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -52,10 +53,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
+      await PushNotificationService.registerBackgroundTaskIfLoggedIn();
       if (authProvider.isRecyclingUnit) {
         context.go('/dashboard');
       } else {
-        // Regular user - navigate to user dashboard if needed
         context.go('/dashboard');
       }
     } else if (mounted) {

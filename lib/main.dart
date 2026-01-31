@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:developer' as developer;
+import 'package:workmanager/workmanager.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/constants.dart';
 import 'core/utils/storage.dart';
@@ -22,13 +23,21 @@ import 'features/settings/settings_screen.dart';
 import 'features/auth/register_unit_screen.dart';
 import 'features/notifications/notifications_screen.dart';
 import 'core/services/push_notification_service.dart';
+import 'core/services/background_notification_task.dart';
 import 'widgets/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await StorageService.init(); // Initialize StorageService
-  
-  // Initialize app
+  await StorageService.init();
+  // Store API base URL for background task (no FCM – periodic fetch when app closed)
+  await StorageService.setString(
+    'api_base_url',
+    AppConstants.baseUrl + AppConstants.apiPrefix,
+  );
+  Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: false,
+  );
   runApp(const AppWithSplash());
 }
 
