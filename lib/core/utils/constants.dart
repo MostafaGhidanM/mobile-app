@@ -31,3 +31,13 @@ class AppConstants {
   ];
 }
 
+/// Resolves an image URL from the API to an absolute URL for display.
+/// Backend may return relative paths (e.g. /uploads/filename); Flutter Image.network needs absolute URLs.
+String resolveImageUrl(String? url) {
+  if (url == null || url.isEmpty) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  final base = AppConstants.baseUrl;
+  final normalized = url.startsWith('/') ? url : '/$url';
+  return base + normalized;
+}
+

@@ -239,7 +239,6 @@
   "status_approved": "Approved",
   "status_rejected": "Rejected",
   "status_sent_to_factory": "Sent to Factory",
-  "status_received_at_factory": "Received at Factory",
   "status_sent_to_admin": "Completed",
   "status_open": "Open",
   "status_in_progress": "In Progress",

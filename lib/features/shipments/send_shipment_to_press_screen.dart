@@ -367,7 +367,7 @@ class _SendShipmentToPressScreenState extends State<SendShipmentToPressScreen> {
                       const SizedBox(height: 20),
                       // مصدر الشحنة تتكتب بالإيد (optional)
                       CustomTextField(
-                        label: isRTL ? 'مصدر الشحنة تتكتب بالإيد' : 'Source description (optional)',
+                        label: isRTL ? 'مصدر الشحنة' : 'Source description (optional)',
                         hint: isRTL ? 'اختياري' : 'Optional',
                         controller: _sourceDescriptionController,
                         maxLines: 2,

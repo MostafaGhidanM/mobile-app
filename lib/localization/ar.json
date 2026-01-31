@@ -39,7 +39,7 @@
   "raw_scale_card_image": "صورة كارتة الميزان من المرسل",
   "raw_weight_kg": "الوزن كيلو",
   "raw_sender": "مرسل الشحنة",
-  "raw_source_description": "مصدر الشحنة تتكتب بالإيد",
+  "raw_source_description": "مصدر الشحنة",
   "raw_receive_button": "استلام",
   "raw_status_sent_to_press": "مرسل للمكبس",
   "raw_status_completed": "مكتملة",
@@ -102,4 +102,3 @@
   "yes": "نعم",
   "no": "لا"
 }
-

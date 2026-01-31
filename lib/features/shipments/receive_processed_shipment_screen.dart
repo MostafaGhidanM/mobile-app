@@ -8,6 +8,7 @@ import '../../core/services/shipment_service.dart';
 import '../../core/services/upload_service.dart';
 import '../../core/models/shipment.dart';
 import '../../features/auth/auth_provider.dart';
+import '../../core/utils/constants.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
@@ -604,7 +605,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                     ),
                                     const SizedBox(height: 8),
                                     Image.network(
-                                      _shipment!.shipmentImage,
+                                      resolveImageUrl(_shipment!.shipmentImage),
                                       height: 200,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
@@ -626,7 +627,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                     ),
                                     const SizedBox(height: 8),
                                     Image.network(
-                                      _shipment!.receiptFromPress!,
+                                      resolveImageUrl(_shipment!.receiptFromPress),
                                       height: 200,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
@@ -665,7 +666,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   children: [
                                     Text(localizations.carCheckImage, style: Theme.of(context).textTheme.labelLarge),
                                     const SizedBox(height: 8),
-                                    Image.network(_shipment!.carCheckImage!, height: 200, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 200)),
+                                    Image.network(resolveImageUrl(_shipment!.carCheckImage), height: 200, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 200)),
                                     const SizedBox(height: 16),
                                   ],
                                 ),
@@ -688,7 +689,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                   children: [
                                     Text(localizations.receiptImage, style: Theme.of(context).textTheme.labelLarge),
                                     const SizedBox(height: 8),
-                                    Image.network(_shipment!.receiptImage!, height: 200, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 200)),
+                                    Image.network(resolveImageUrl(_shipment!.receiptImage), height: 200, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 200)),
                                     const SizedBox(height: 16),
                                   ],
                                 ),

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import '../localization/app_localizations.dart';
 
 class ImagePickerWidget extends StatelessWidget {
   final String? imagePath;
@@ -28,55 +29,97 @@ class ImagePickerWidget extends StatelessWidget {
   }) : super(key: key);
 
   Future<void> _pickImage(BuildContext context) async {
-    // Capture location first if enabled
-    Map<String, double>? location;
+    // When location is required for this photo, enforce it before opening camera
     if (captureLocation && !kIsWeb) {
-      try {
-        // Check if location services are enabled
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (!serviceEnabled) {
-          // Force open location settings
-          await Geolocator.openLocationSettings();
-          // Wait a bit and check again
-          await Future.delayed(const Duration(milliseconds: 500));
-          serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final l10n = AppLocalizations.of(context);
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (context.mounted && l10n != null) {
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.enableLocationServices),
+              content: Text(l10n.locationServicesRequiredCapture),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(l10n.translate('cancel')),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await Geolocator.openLocationSettings();
+                  },
+                  child: Text(l10n.translate('settings') ?? 'Settings'),
+                ),
+              ],
+            ),
+          );
         }
+        return;
+      }
 
-        if (serviceEnabled) {
-          // Check location permissions
-          LocationPermission permission = await Geolocator.checkPermission();
-          if (permission == LocationPermission.denied) {
-            permission = await Geolocator.requestPermission();
-          }
-          
-          if (permission == LocationPermission.deniedForever) {
-            // Open app settings to enable location permission
-            await Geolocator.openAppSettings();
-            await Future.delayed(const Duration(milliseconds: 500));
-            permission = await Geolocator.checkPermission();
-          }
-          
-          if (permission == LocationPermission.whileInUse || 
-              permission == LocationPermission.always) {
-            try {
-              Position position = await Geolocator.getCurrentPosition(
-                desiredAccuracy: LocationAccuracy.high,
-                timeLimit: const Duration(seconds: 5),
-              );
-              location = {
-                'lat': position.latitude,
-                'lng': position.longitude,
-              };
-              if (onLocationCaptured != null) {
-                onLocationCaptured!(location!);
-              }
-            } catch (e) {
-              // Continue without location if capture fails
-            }
-          }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        if (context.mounted && l10n != null) {
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.enableLocationPermission),
+              content: Text(l10n.locationPermissionRequired),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(l10n.translate('cancel')),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await Geolocator.openAppSettings();
+                  },
+                  child: Text(l10n.translate('settings') ?? 'Settings'),
+                ),
+              ],
+            ),
+          );
         }
-      } catch (e) {
-        // Continue without location if there's an error
+        return;
+      }
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return;
+      }
+
+      try {
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5),
+        );
+        final location = <String, double>{
+          'lat': position.latitude,
+          'lng': position.longitude,
+        };
+        onLocationCaptured?.call(location);
+      } catch (_) {
+        if (context.mounted && l10n != null) {
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.pleaseEnableLocationServices),
+              content: Text(l10n.failedToGetLocation),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(l10n.translate('ok') ?? 'OK'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
       }
     }
 
