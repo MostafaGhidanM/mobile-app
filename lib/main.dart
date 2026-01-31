@@ -187,9 +187,10 @@ final GoRouter _router = GoRouter(
     final isLoggedIn = authProvider.isAuthenticated;
     final isLoginRoute = state.matchedLocation == '/login';
     final isRegisterUnitRoute = state.matchedLocation == '/register-unit';
+    final isRegisterSenderRoute = state.matchedLocation == '/register-sender';
 
-    // Allow access to registration screen without login
-    if (isRegisterUnitRoute) {
+    // Allow access to registration screens without login
+    if (isRegisterUnitRoute || isRegisterSenderRoute) {
       return null;
     }
 
