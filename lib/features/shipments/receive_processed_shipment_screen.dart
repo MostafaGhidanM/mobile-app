@@ -143,7 +143,6 @@ class ReceiveProcessedShipmentDetailScreen extends StatefulWidget {
 class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedShipmentDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _receivedWeightController = TextEditingController();
-  final _emptyCarWeightController = TextEditingController();
   final _plentyController = TextEditingController();
   final _plentyReasonController = TextEditingController(text: 'هالك');
   
@@ -159,6 +158,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
   String? _carCheckImageUrl;
   String? _receiptImagePath;
   String? _receiptImageUrl;
+  Map<String, double>? _factoryLocation;
   double? _calculatedNetWeight;
 
   @override
@@ -170,7 +170,6 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
   @override
   void dispose() {
     _receivedWeightController.dispose();
-    _emptyCarWeightController.dispose();
     _plentyController.dispose();
     _plentyReasonController.dispose();
     super.dispose();
@@ -190,10 +189,9 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
           _shipment = s;
           _isLoadingShipment = false;
         });
-        // Pre-fill factory fields when already received (RECEIVED_AT_FACTORY – only plenty editable)
+        // Pre-fill factory fields when already received (RECEIVED_AT_FACTORY – view only, no plenty)
         if (s.status == ProcessedMaterialShipmentStatus.receivedAtFactory) {
           if (s.receivedWeight != null) _receivedWeightController.text = s.receivedWeight!.toString();
-          if (s.emptyCarWeight != null) _emptyCarWeightController.text = s.emptyCarWeight!.toString();
           if (s.plenty != null) _plentyController.text = s.plenty!.toString();
           if (s.plentyReason != null && s.plentyReason!.isNotEmpty) _plentyReasonController.text = s.plentyReason!;
           if (s.carCheckImage != null && s.carCheckImage!.isNotEmpty) _carCheckImageUrl = s.carCheckImage;
@@ -220,15 +218,10 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
 
   void _calculateNetWeight() {
     final receivedWeight = double.tryParse(_receivedWeightController.text);
-    final emptyCarWeight = double.tryParse(_emptyCarWeightController.text);
     final plenty = double.tryParse(_plentyController.text) ?? 0;
 
-    if (receivedWeight != null && emptyCarWeight != null) {
-      if (receivedWeight <= emptyCarWeight) {
-        setState(() => _calculatedNetWeight = null);
-        return;
-      }
-      final netWeight = (receivedWeight - emptyCarWeight) * (1 - plenty / 100);
+    if (receivedWeight != null && receivedWeight > 0) {
+      final netWeight = receivedWeight * (1 - plenty / 100);
       setState(() => _calculatedNetWeight = netWeight);
     } else {
       setState(() => _calculatedNetWeight = null);
@@ -351,7 +344,8 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
     }
 
     final receivedWeight = double.parse(_receivedWeightController.text);
-    final emptyCarWeight = double.parse(_emptyCarWeightController.text);
+    final plentyText = _plentyController.text.trim();
+    final plenty = plentyText.isEmpty ? null : double.tryParse(plentyText);
 
     final factoryUnitId = Provider.of<AuthProvider>(context, listen: false)
         .recyclingUnit?.id;
@@ -373,11 +367,11 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
         shipmentId: widget.shipmentId,
         factoryUnitId: factoryUnitId,
         receivedWeight: receivedWeight,
-        emptyCarWeight: emptyCarWeight,
-        plenty: double.parse(_plentyController.text),
         carCheckImage: _carCheckImageUrl!,
         receiptImage: _receiptImageUrl!,
+        plenty: plenty,
         plentyReason: _plentyReasonController.text,
+        geoLocation: _factoryLocation,
       );
 
       if (response.isSuccess && mounted) {
@@ -659,6 +653,10 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                 ImagePickerWidget(
                                   label: '${localizations.carCheckImage} *',
                                   imagePath: _carCheckImagePath,
+                                  captureLocation: true,
+                                  onLocationCaptured: (location) {
+                                    setState(() => _factoryLocation = location);
+                                  },
                                   onImagePicked: _uploadCarCheckImage,
                                 ),
                               if ((_isReadOnly || _isPlentyOnlyEdit) && _shipment!.carCheckImage != null && _shipment!.carCheckImage!.isNotEmpty)
@@ -678,6 +676,10 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                 ImagePickerWidget(
                                   label: '${localizations.receiptImage} *',
                                   imagePath: _receiptImagePath,
+                                  captureLocation: true,
+                                  onLocationCaptured: (location) {
+                                    setState(() => _factoryLocation = location);
+                                  },
                                   onImagePicked: _uploadReceiptImage,
                                 ),
                               if ((_isReadOnly || _isPlentyOnlyEdit) && _shipment!.receiptImage != null && _shipment!.receiptImage!.isNotEmpty)
@@ -692,7 +694,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                 ),
                               if (_isFullReceiveEdit) const SizedBox(height: 16),
                               
-                              // Received Weight
+                              // Received Weight (single weight for shipment)
                               CustomTextField(
                                 controller: _receivedWeightController,
                                 label: '${localizations.receivedWeight} (${localizations.kg})${_isFullReceiveEdit ? ' *' : ''}',
@@ -707,45 +709,31 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                               ),
                               const SizedBox(height: 16),
                               
-                              // Empty Car Weight
-                              CustomTextField(
-                                controller: _emptyCarWeightController,
-                                label: '${localizations.emptyCarWeight} (${localizations.kg})${_isFullReceiveEdit ? ' *' : ''}',
-                                keyboardType: TextInputType.number,
-                                enabled: _isFullReceiveEdit,
-                                onChanged: (_) => _calculateNetWeight(),
-                                validator: _isFullReceiveEdit ? (value) {
-                                  if (value == null || value.isEmpty) return localizations.pleaseEnterEmptyCarWeight;
-                                  if (double.tryParse(value) == null) return localizations.pleaseEnterValidNumber;
-                                  return null;
-                                } : null,
-                              ),
-                              const SizedBox(height: 16),
-                              
-                              // Plenty
-                              CustomTextField(
-                                controller: _plentyController,
-                                label: '${localizations.plenty} (%)${(_isFullReceiveEdit || _isPlentyOnlyEdit) ? ' *' : ''}',
-                                keyboardType: TextInputType.number,
-                                enabled: !_isReadOnly,
-                                onChanged: (_) => _calculateNetWeight(),
-                                validator: (_isFullReceiveEdit || _isPlentyOnlyEdit) ? (value) {
-                                  if (value == null || value.isEmpty) return 'Please enter plenty percentage';
-                                  final plenty = double.tryParse(value);
-                                  if (plenty == null) return localizations.pleaseEnterValidNumber;
-                                  if (plenty < 0 || plenty > 100) return 'Plenty must be between 0 and 100';
-                                  return null;
-                                } : null,
-                              ),
-                              const SizedBox(height: 16),
-                              
-                              // Plenty Reason
-                              CustomTextField(
-                                controller: _plentyReasonController,
-                                label: localizations.plentyReason,
-                                enabled: !_isReadOnly,
-                              ),
-                              const SizedBox(height: 16),
+                              // Plenty: only for full receive; in-progress (RECEIVED_AT_FACTORY) does not show plenty
+                              if (!_isPlentyOnlyEdit) ...[
+                                CustomTextField(
+                                  controller: _plentyController,
+                                  label: '${localizations.plenty} (%)',
+                                  keyboardType: TextInputType.number,
+                                  enabled: _isFullReceiveEdit && !_isReadOnly,
+                                  onChanged: (_) => _calculateNetWeight(),
+                                  validator: _isFullReceiveEdit ? (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      final plenty = double.tryParse(value);
+                                      if (plenty == null) return localizations.pleaseEnterValidNumber;
+                                      if (plenty < 0 || plenty > 100) return 'Plenty must be between 0 and 100';
+                                    }
+                                    return null;
+                                  } : null,
+                                ),
+                                const SizedBox(height: 16),
+                                CustomTextField(
+                                  controller: _plentyReasonController,
+                                  label: localizations.plentyReason,
+                                  enabled: _isFullReceiveEdit && !_isReadOnly,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
                               
                               // Net weight: show from shipment when read-only, or calculated when editing
                               if (_isReadOnly && _shipment!.netWeight != null)
@@ -772,7 +760,7 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                 ),
                               const SizedBox(height: 24),
                               
-                              // Buttons: read-only = Back only; plenty-only = Back + Submit plenty; full = Back + Receive
+                              // Buttons: read-only = Back only; in-progress = Back only (no plenty); full = Back + Receive
                               Row(
                                 children: [
                                   Expanded(
@@ -781,12 +769,12 @@ class _ReceiveProcessedShipmentDetailScreenState extends State<ReceiveProcessedS
                                       child: Text(localizations.cancel),
                                     ),
                                   ),
-                                  if (!_isReadOnly) ...[
+                                  if (!_isReadOnly && !_isPlentyOnlyEdit) ...[
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: CustomButton(
-                                        text: _isPlentyOnlyEdit ? (localizations.submitPlenty ?? 'Submit plenty') : localizations.receive,
-                                        onPressed: _isLoading ? null : (_isPlentyOnlyEdit ? _submitPlentyOnly : _submitReceive),
+                                        text: localizations.receive,
+                                        onPressed: _isLoading ? null : _submitReceive,
                                         isLoading: _isLoading,
                                       ),
                                     ),

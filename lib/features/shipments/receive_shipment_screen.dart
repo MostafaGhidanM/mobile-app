@@ -43,7 +43,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
   List<Sender> _senders = [];
   bool _isLoading = false;
   bool _isLoadingData = true;
-  Map<String, double>? _shipmentLocation;
 
   // Complete-from-sender flow
   String _receiveMode = 'new'; // 'new' | 'complete_from_sender'
@@ -371,7 +370,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
         senderId: _selectedSender!.id,
         shipmentNumber: nextNumberResponse.data,
         receiptImage: _receiptImageUrl,
-        geoLocation: _shipmentLocation,
       );
 
       if (response.isSuccess && mounted) {
@@ -616,12 +614,6 @@ class _ReceiveShipmentScreenState extends State<ReceiveShipmentScreen> {
                       ImagePickerWidget(
                         imagePath: _shipmentImagePath,
                         label: localizations.translate('raw_shipment_image'),
-                        captureLocation: true,
-                        onLocationCaptured: (location) {
-                          setState(() {
-                            _shipmentLocation = location;
-                          });
-                        },
                         onImagePicked: (fileOrBytes) async {
                           setState(() {
                             if (kIsWeb && fileOrBytes is Uint8List) {

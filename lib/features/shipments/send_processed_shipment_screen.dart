@@ -429,6 +429,7 @@ class _SendProcessedShipmentScreenState extends State<SendProcessedShipmentScree
             weight: double.parse((split['weightController'] as TextEditingController).text),
           );
         }).toList(),
+        geoLocation: _shipmentLocation,
       );
 
       if (response.isSuccess && mounted) {

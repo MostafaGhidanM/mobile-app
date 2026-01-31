@@ -135,6 +135,7 @@ class ShipmentService {
     String? receiptFromPress,
     String status = 'SENT_TO_FACTORY',
     List<ProcessedMaterialShipmentSplit>? splits,
+    Map<String, double>? geoLocation,
   }) async {
     final data = <String, dynamic>{
       'shipmentImage': shipmentImage,
@@ -152,6 +153,7 @@ class ShipmentService {
       if (shipmentNumber != null) 'shipmentNumber': shipmentNumber,
       if (receiptFromPress != null) 'receiptFromPress': receiptFromPress,
       'status': status,
+      if (geoLocation != null) 'geoLocation': geoLocation,
     };
 
     if (splits != null && splits.isNotEmpty) {
@@ -199,22 +201,22 @@ class ShipmentService {
     required String shipmentId,
     required String factoryUnitId,
     required double receivedWeight,
-    required double emptyCarWeight,
-    required double plenty,
+    double? plenty,
     String? carCheckImage,
     String? receiptImage,
     String plentyReason = 'هالك',
+    Map<String, double>? geoLocation,
   }) async {
     return await _apiClient.post<ProcessedMaterialShipment>(
       ApiEndpoints.processedMaterialShipmentReceive(shipmentId),
       data: {
         'factoryUnitId': factoryUnitId,
         'receivedWeight': receivedWeight,
-        'emptyCarWeight': emptyCarWeight,
-        'plenty': plenty,
+        if (plenty != null) 'plenty': plenty,
         'plentyReason': plentyReason,
         if (carCheckImage != null) 'carCheckImage': carCheckImage,
         if (receiptImage != null) 'receiptImage': receiptImage,
+        if (geoLocation != null) 'geoLocation': geoLocation,
       },
       fromJson: (json) => ProcessedMaterialShipment.fromJson(json as Map<String, dynamic>),
     );

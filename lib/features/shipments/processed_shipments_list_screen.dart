@@ -146,6 +146,8 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
     switch (filter) {
       case 'sent_to_factory':
         return 'SENT_TO_FACTORY';
+      case 'received_at_factory':
+        return 'RECEIVED_AT_FACTORY';
       case 'sent_to_admin':
         return 'SENT_TO_ADMIN';
       case 'approved':
@@ -164,6 +166,8 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
       switch (_selectedFilter) {
         case 'sent_to_factory':
           return shipment.status == ProcessedMaterialShipmentStatus.sentToFactory;
+        case 'received_at_factory':
+          return shipment.status == ProcessedMaterialShipmentStatus.receivedAtFactory;
         case 'sent_to_admin':
           return shipment.status == ProcessedMaterialShipmentStatus.sentToAdmin;
         case 'approved':
@@ -227,6 +231,15 @@ class _ProcessedShipmentsListScreenState extends State<ProcessedShipmentsListScr
                     isSelected: _selectedFilter == 'sent_to_factory',
                     onTap: () => setState(() {
                       _selectedFilter = 'sent_to_factory';
+                      _loadShipments(refresh: true);
+                    }),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: localizations.statusReceivedAtFactory,
+                    isSelected: _selectedFilter == 'received_at_factory',
+                    onTap: () => setState(() {
+                      _selectedFilter = 'received_at_factory';
                       _loadShipments(refresh: true);
                     }),
                   ),

@@ -133,7 +133,6 @@ class ProcessedMaterialShipment {
   final String? carCheckImage;
   final String? receiptImage;
   final double? receivedWeight;
-  final double? emptyCarWeight;
   final double? plenty;
   final String? plentyReason;
   final double? netWeight;
@@ -173,7 +172,6 @@ class ProcessedMaterialShipment {
     this.carCheckImage,
     this.receiptImage,
     this.receivedWeight,
-    this.emptyCarWeight,
     this.plenty,
     this.plentyReason,
     this.netWeight,
@@ -211,7 +209,6 @@ class ProcessedMaterialShipment {
       carCheckImage: json['carCheckImage'],
       receiptImage: json['receiptImage'],
       receivedWeight: json['receivedWeight'] != null ? (json['receivedWeight'] as num).toDouble() : null,
-      emptyCarWeight: json['emptyCarWeight'] != null ? (json['emptyCarWeight'] as num).toDouble() : null,
       plenty: json['plenty'] != null ? (json['plenty'] as num).toDouble() : null,
       plentyReason: json['plentyReason'],
       netWeight: json['netWeight'] != null ? (json['netWeight'] as num).toDouble() : null,

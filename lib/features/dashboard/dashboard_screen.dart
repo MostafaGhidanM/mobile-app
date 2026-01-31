@@ -275,13 +275,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           context.push('/shipments/send-processed');
                         },
                       ),
-                    // Factory units: Receive Processed Shipment
-                    if (unit?.unitType == UnitType.shredder || unit?.unitType == UnitType.washingLine)
-                      _QuickActionCard(
-                        icon: Icons.download,
-                        label: isRTL ? 'استلام شحنة معالجة' : 'Receive Processed Shipment',
-                        onTap: () => context.push('/shipments/receive-processed'),
-                      ),
+                    // Factory: no separate "Receive Processed" button; factory receives by tapping a shipment in عرض شحناتي (processed list)
                     // All units: View Shipments
                     _QuickActionCard(
                       icon: Icons.visibility,

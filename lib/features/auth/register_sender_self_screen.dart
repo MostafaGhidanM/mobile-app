@@ -12,7 +12,7 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/image_picker_widget.dart';
 import '../../widgets/constrained_dropdown.dart';
 
-/// Self-registration for senders (no unit assignment). Same steps as press "register sender" plus password.
+/// Self-registration for senders (no unit assignment). Single-page form like press "register sender" plus password.
 /// On success navigates to login.
 class RegisterSenderSelfScreen extends StatefulWidget {
   const RegisterSenderSelfScreen({Key? key}) : super(key: key);
@@ -22,9 +22,7 @@ class RegisterSenderSelfScreen extends StatefulWidget {
 }
 
 class _RegisterSenderSelfScreenState extends State<RegisterSenderSelfScreen> {
-  final PageController _pageController = PageController();
-  int _currentStep = 0;
-
+  final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _nationalIdController = TextEditingController();
@@ -32,7 +30,9 @@ class _RegisterSenderSelfScreenState extends State<RegisterSenderSelfScreen> {
   final _mobileNumberController = TextEditingController();
   final _expectedDailyAmountController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   final SenderService _senderService = SenderService();
   final UploadService _uploadService = UploadService();
@@ -49,7 +49,6 @@ class _RegisterSenderSelfScreenState extends State<RegisterSenderSelfScreen> {
 
   @override
   void dispose() {
-    _pageController.dispose();
     _phoneController.dispose();
     _fullNameController.dispose();
     _nationalIdController.dispose();
@@ -57,6 +56,7 @@ class _RegisterSenderSelfScreenState extends State<RegisterSenderSelfScreen> {
     _mobileNumberController.dispose();
     _expectedDailyAmountController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -98,6 +98,7 @@ class _RegisterSenderSelfScreenState extends State<RegisterSenderSelfScreen> {
   }
 
   Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
     if (_frontIdImageUrl == null || _backIdImageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -125,16 +126,32 @@ class _RegisterSenderSelfScreenState extends State<RegisterSenderSelfScreen> {
       );
       return;
     }
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? 'كلمة المرور غير متطابقة'
+                : 'Passwords do not match',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     try {
+      final mobile = _mobileNumberController.text.trim().isEmpty
+          ? _phoneController.text.trim()
+          : _mobileNumberController.text.trim();
       final sender = Sender(
         id: '',
         fullName: _fullNameController.text.trim(),
         nationalId: _nationalIdController.text.trim(),
         address: _addressController.text.trim(),
-        mobileNumber: _mobileNumberController.text.trim(),
+        mobileNumber: mobile,
         nationalIdFront: _frontIdImageUrl!,
         nationalIdBack: _backIdImageUrl!,
         gender: _selectedGender,
@@ -196,449 +213,237 @@ class _RegisterSenderSelfScreenState extends State<RegisterSenderSelfScreen> {
           title: Text(
             isRTL ? 'تسجيل كمرسل' : 'Register as sender',
           ),
-          actions: [
-            if (_currentStep == 2)
-              IconButton(
-                icon: const Icon(Icons.check),
-                onPressed: _isLoading ? null : _submitForm,
-              ),
-          ],
         ),
-        body: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  _StepIndicator(
-                    label: localizations.translate('phone_number_tab'),
-                    isActive: _currentStep == 0,
-                    isCompleted: _currentStep > 0,
-                  ),
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: _currentStep > 0
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.grey[300],
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CustomTextField(
+                  label: localizations.translate('mobile_phone_number'),
+                  hint: localizations.translate('mobile_phone_number'),
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return localizations.translate('required_field');
+                    }
+                    if (value.length < 5) {
+                      return localizations.translate('invalid_format');
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: localizations.password,
+                  hint: localizations.enterPassword,
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return localizations.translate('required_field');
+                    }
+                    if (value.length < 4) {
+                      return localizations.passwordMin4Chars;
+                    }
+                    return null;
+                  },
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
                     ),
-                  ),
-                  _StepIndicator(
-                    label: localizations.translate('front_id_tab'),
-                    isActive: _currentStep == 1,
-                    isCompleted: _currentStep > 1,
-                  ),
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: _currentStep > 1
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.grey[300],
-                    ),
-                  ),
-                  _StepIndicator(
-                    label: localizations.translate('complete_data_tab'),
-                    isActive: _currentStep == 2,
-                    isCompleted: false,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _PhoneNumberStep(
-                    controller: _phoneController,
-                    onNext: () {
-                      _mobileNumberController.text = _phoneController.text;
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                      setState(() => _currentStep = 1);
-                    },
-                  ),
-                  _IdCardStep(
-                    frontImagePath: _frontIdImagePath,
-                    backImagePath: _backIdImagePath,
-                    onFrontImagePicked: (fileOrBytes) async {
-                      setState(() {
-                        if (kIsWeb && fileOrBytes is Uint8List) {
-                        } else if (!kIsWeb && fileOrBytes is File) {
-                          _frontIdImagePath = fileOrBytes.path;
-                        }
-                      });
-                      await _uploadImage(fileOrBytes, true);
-                    },
-                    onBackImagePicked: (fileOrBytes) async {
-                      setState(() {
-                        if (kIsWeb && fileOrBytes is Uint8List) {
-                        } else if (!kIsWeb && fileOrBytes is File) {
-                          _backIdImagePath = fileOrBytes.path;
-                        }
-                      });
-                      await _uploadImage(fileOrBytes, false);
-                    },
-                    onNext: () {
-                      if (_frontIdImageUrl != null && _backIdImageUrl != null) {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                        setState(() => _currentStep = 2);
-                      }
-                    },
-                  ),
-                  _CompleteDataStep(
-                    fullNameController: _fullNameController,
-                    nationalIdController: _nationalIdController,
-                    addressController: _addressController,
-                    mobileNumberController: _mobileNumberController,
-                    expectedDailyAmountController: _expectedDailyAmountController,
-                    passwordController: _passwordController,
-                    obscurePassword: _obscurePassword,
-                    onObscurePasswordToggle: () =>
+                    onPressed: () =>
                         setState(() => _obscurePassword = !_obscurePassword),
-                    selectedGender: _selectedGender,
-                    selectedSenderType: _selectedSenderType,
-                    haveSmartPhone: _haveSmartPhone,
-                    familyCompany: _familyCompany,
-                    onGenderChanged: (value) => setState(() => _selectedGender = value),
-                    onSenderTypeChanged: (value) =>
-                        setState(() => _selectedSenderType = value),
-                    onHaveSmartPhoneChanged: (value) =>
-                        setState(() => _haveSmartPhone = value),
-                    onFamilyCompanyChanged: (value) =>
-                        setState(() => _familyCompany = value),
-                    onSubmit: _submitForm,
-                    isLoading: _isLoading,
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StepIndicator extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final bool isCompleted;
-
-  const _StepIndicator({
-    required this.label,
-    required this.isActive,
-    required this.isCompleted,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive || isCompleted
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey[300],
-          ),
-          child: isCompleted
-              ? const Icon(Icons.check, size: 16, color: Colors.white)
-              : null,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: isActive
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey[600],
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
-class _PhoneNumberStep extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onNext;
-
-  const _PhoneNumberStep({
-    required this.controller,
-    required this.onNext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CustomTextField(
-            label: localizations.translate('mobile_phone_number'),
-            hint: localizations.translate('mobile_phone_number'),
-            controller: controller,
-            keyboardType: TextInputType.phone,
-          ),
-          const SizedBox(height: 32),
-          CustomButton(
-            text: localizations.translate('next') ?? 'Next',
-            onPressed: onNext,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IdCardStep extends StatelessWidget {
-  final String? frontImagePath;
-  final String? backImagePath;
-  final Function(dynamic) onFrontImagePicked;
-  final Function(dynamic) onBackImagePicked;
-  final VoidCallback onNext;
-
-  const _IdCardStep({
-    required this.frontImagePath,
-    required this.backImagePath,
-    required this.onFrontImagePicked,
-    required this.onBackImagePicked,
-    required this.onNext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isRTL = Localizations.localeOf(context).languageCode == 'ar';
-    final localizations = AppLocalizations.of(context)!;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ImagePickerWidget(
-            imagePath: frontImagePath,
-            label: isRTL ? 'البطاقة الأمامية' : 'Front ID Card',
-            onImagePicked: onFrontImagePicked,
-            icon: Icons.credit_card,
-          ),
-          const SizedBox(height: 24),
-          ImagePickerWidget(
-            imagePath: backImagePath,
-            label: isRTL ? 'البطاقة الخلفية' : 'Back ID Card',
-            onImagePicked: onBackImagePicked,
-            icon: Icons.credit_card,
-          ),
-          const SizedBox(height: 32),
-          CustomButton(
-            text: localizations.translate('next') ?? 'Next',
-            onPressed: onNext,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompleteDataStep extends StatelessWidget {
-  final TextEditingController fullNameController;
-  final TextEditingController nationalIdController;
-  final TextEditingController addressController;
-  final TextEditingController mobileNumberController;
-  final TextEditingController expectedDailyAmountController;
-  final TextEditingController passwordController;
-  final bool obscurePassword;
-  final VoidCallback onObscurePasswordToggle;
-  final Gender selectedGender;
-  final SenderType selectedSenderType;
-  final bool haveSmartPhone;
-  final bool familyCompany;
-  final Function(Gender) onGenderChanged;
-  final Function(SenderType) onSenderTypeChanged;
-  final Function(bool) onHaveSmartPhoneChanged;
-  final Function(bool) onFamilyCompanyChanged;
-  final VoidCallback onSubmit;
-  final bool isLoading;
-
-  const _CompleteDataStep({
-    required this.fullNameController,
-    required this.nationalIdController,
-    required this.addressController,
-    required this.mobileNumberController,
-    required this.expectedDailyAmountController,
-    required this.passwordController,
-    required this.obscurePassword,
-    required this.onObscurePasswordToggle,
-    required this.selectedGender,
-    required this.selectedSenderType,
-    required this.haveSmartPhone,
-    required this.familyCompany,
-    required this.onGenderChanged,
-    required this.onSenderTypeChanged,
-    required this.onHaveSmartPhoneChanged,
-    required this.onFamilyCompanyChanged,
-    required this.onSubmit,
-    required this.isLoading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-    final isRTL = Localizations.localeOf(context).languageCode == 'ar';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CustomTextField(
-            label: isRTL ? 'الاسم الكامل' : 'Full Name',
-            controller: fullNameController,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: isRTL ? 'الرقم القومي' : 'National ID',
-            controller: nationalIdController,
-            keyboardType: TextInputType.text,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: isRTL ? 'العنوان' : 'Address',
-            controller: addressController,
-            maxLines: 2,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: isRTL ? 'رقم الهاتف' : 'Mobile Number',
-            controller: mobileNumberController,
-            keyboardType: TextInputType.phone,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: localizations.password,
-            hint: localizations.password,
-            controller: passwordController,
-            obscureText: obscurePassword,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return localizations.translate('required_field');
-              }
-              if (value.length < 4) {
-                return localizations.translate('invalid_format');
-              }
-              return null;
-            },
-            suffixIcon: IconButton(
-              icon: Icon(
-                obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: Colors.grey,
-              ),
-              onPressed: onObscurePasswordToggle,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ConstrainedDropdownButtonFormField<Gender>(
-            value: selectedGender,
-            isExpanded: true,
-            menuMaxHeight: 300,
-            decoration: InputDecoration(
-              labelText: isRTL ? 'النوع' : 'Gender',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            items: Gender.values.map((gender) {
-              return DropdownMenuItem<Gender>(
-                value: gender,
-                child: Text(
-                  gender == Gender.male
-                      ? (isRTL ? 'ذكر' : 'Male')
-                      : (isRTL ? 'أنثى' : 'Female'),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
                 ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) onGenderChanged(value);
-            },
-          ),
-          const SizedBox(height: 20),
-          ConstrainedDropdownButtonFormField<SenderType>(
-            value: selectedSenderType,
-            isExpanded: true,
-            menuMaxHeight: 300,
-            decoration: InputDecoration(
-              labelText: isRTL ? 'نوع المرسل' : 'Sender Type',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            items: SenderType.values.map((type) {
-              String label;
-              switch (type) {
-                case SenderType.residentialUnit:
-                  label = isRTL ? 'وحدة سكنية' : 'Residential Unit';
-                  break;
-                case SenderType.collectionCenter:
-                  label = isRTL ? 'مركز تجميع' : 'Collection Center';
-                  break;
-                case SenderType.mobileCollection:
-                  label = isRTL ? 'تجميع متنقل' : 'Mobile Collection';
-                  break;
-                case SenderType.collectionWorker:
-                  label = isRTL ? 'عامل تجميع' : 'Collection Worker';
-                  break;
-              }
-              return DropdownMenuItem<SenderType>(
-                value: type,
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: localizations.confirmPassword,
+                  hint: localizations.reEnterPassword,
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  validator: (value) {
+                    if (value != _passwordController.text) {
+                      return localizations.passwordsDoNotMatch;
+                    }
+                    return null;
+                  },
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () => setState(
+                        () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                  ),
                 ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) onSenderTypeChanged(value);
-            },
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: isRTL ? 'الاسم الكامل' : 'Full Name',
+                  controller: _fullNameController,
+                  validator: (v) =>
+                      (v == null || v.isEmpty)
+                          ? localizations.translate('required_field')
+                          : null,
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: isRTL ? 'الرقم القومي' : 'National ID',
+                  controller: _nationalIdController,
+                  keyboardType: TextInputType.text,
+                  validator: (v) =>
+                      (v == null || v.isEmpty)
+                          ? localizations.translate('required_field')
+                          : null,
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: isRTL ? 'العنوان' : 'Address',
+                  controller: _addressController,
+                  maxLines: 2,
+                  validator: (v) =>
+                      (v == null || v.isEmpty)
+                          ? localizations.translate('required_field')
+                          : null,
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: isRTL ? 'رقم الهاتف' : 'Mobile Number',
+                  controller: _mobileNumberController,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 20),
+                ImagePickerWidget(
+                  imagePath: _frontIdImagePath,
+                  label: isRTL ? 'البطاقة الأمامية' : 'Front ID Card',
+                  onImagePicked: (fileOrBytes) async {
+                    setState(() {
+                      if (kIsWeb && fileOrBytes is Uint8List) {
+                      } else if (!kIsWeb && fileOrBytes is File) {
+                        _frontIdImagePath = fileOrBytes.path;
+                      }
+                    });
+                    await _uploadImage(fileOrBytes, true);
+                  },
+                  icon: Icons.credit_card,
+                ),
+                const SizedBox(height: 24),
+                ImagePickerWidget(
+                  imagePath: _backIdImagePath,
+                  label: isRTL ? 'البطاقة الخلفية' : 'Back ID Card',
+                  onImagePicked: (fileOrBytes) async {
+                    setState(() {
+                      if (kIsWeb && fileOrBytes is Uint8List) {
+                      } else if (!kIsWeb && fileOrBytes is File) {
+                        _backIdImagePath = fileOrBytes.path;
+                      }
+                    });
+                    await _uploadImage(fileOrBytes, false);
+                  },
+                  icon: Icons.credit_card,
+                ),
+                const SizedBox(height: 20),
+                ConstrainedDropdownButtonFormField<Gender>(
+                  value: _selectedGender,
+                  isExpanded: true,
+                  menuMaxHeight: 300,
+                  decoration: InputDecoration(
+                    labelText: isRTL ? 'النوع' : 'Gender',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  items: Gender.values.map((gender) {
+                    return DropdownMenuItem<Gender>(
+                      value: gender,
+                      child: Text(
+                        gender == Gender.male
+                            ? (isRTL ? 'ذكر' : 'Male')
+                            : (isRTL ? 'أنثى' : 'Female'),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) setState(() => _selectedGender = value);
+                  },
+                ),
+                const SizedBox(height: 20),
+                ConstrainedDropdownButtonFormField<SenderType>(
+                  value: _selectedSenderType,
+                  isExpanded: true,
+                  menuMaxHeight: 300,
+                  decoration: InputDecoration(
+                    labelText: isRTL ? 'نوع المرسل' : 'Sender Type',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  items: SenderType.values.map((type) {
+                    String label;
+                    switch (type) {
+                      case SenderType.residentialUnit:
+                        label = isRTL ? 'وحدة سكنية' : 'Residential Unit';
+                        break;
+                      case SenderType.collectionCenter:
+                        label = isRTL ? 'مركز تجميع' : 'Collection Center';
+                        break;
+                      case SenderType.mobileCollection:
+                        label = isRTL ? 'تجميع متنقل' : 'Mobile Collection';
+                        break;
+                      case SenderType.collectionWorker:
+                        label = isRTL ? 'عامل تجميع' : 'Collection Worker';
+                        break;
+                    }
+                    return DropdownMenuItem<SenderType>(
+                      value: type,
+                      child: Text(
+                        label,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) setState(() => _selectedSenderType = value);
+                  },
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  label: isRTL ? 'الكمية المتوقعة يومياً' : 'Expected Daily Amount',
+                  controller: _expectedDailyAmountController,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 20),
+                CheckboxListTile(
+                  title: Text(isRTL ? 'لديه هاتف ذكي' : 'Has Smartphone'),
+                  value: _haveSmartPhone,
+                  onChanged: (value) =>
+                      setState(() => _haveSmartPhone = value ?? false),
+                ),
+                CheckboxListTile(
+                  title: Text(isRTL ? 'شركة عائلية' : 'Family Company'),
+                  value: _familyCompany,
+                  onChanged: (value) =>
+                      setState(() => _familyCompany = value ?? false),
+                ),
+                const SizedBox(height: 32),
+                CustomButton(
+                  text: isRTL ? 'تسجيل' : 'Register',
+                  onPressed: _isLoading ? null : _submitForm,
+                  isLoading: _isLoading,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: isRTL ? 'الكمية المتوقعة يومياً' : 'Expected Daily Amount',
-            controller: expectedDailyAmountController,
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 20),
-          CheckboxListTile(
-            title: Text(isRTL ? 'لديه هاتف ذكي' : 'Has Smartphone'),
-            value: haveSmartPhone,
-            onChanged: (value) => onHaveSmartPhoneChanged(value ?? false),
-          ),
-          CheckboxListTile(
-            title: Text(isRTL ? 'شركة عائلية' : 'Family Company'),
-            value: familyCompany,
-            onChanged: (value) => onFamilyCompanyChanged(value ?? false),
-          ),
-          const SizedBox(height: 32),
-          CustomButton(
-            text: isRTL ? 'تسجيل' : 'Register',
-            onPressed: onSubmit,
-            isLoading: isLoading,
-          ),
-        ],
+        ),
       ),
     );
   }
