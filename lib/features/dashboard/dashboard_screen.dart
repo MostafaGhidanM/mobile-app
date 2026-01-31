@@ -11,6 +11,7 @@ import '../../widgets/notification_badge.dart';
 import '../../core/services/recycling_unit_service.dart';
 import '../../core/services/sender_service.dart';
 import '../../core/models/recycling_unit.dart';
+import '../../core/utils/dialogs.dart';
 import 'package:go_router/go_router.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -275,20 +276,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           context.push('/shipments/send-processed');
                         },
                       ),
-                    // Factory: no separate "Receive Processed" button; factory receives by tapping a shipment in عرض شحناتي (processed list)
+                    // Factory: Receive Processed Shipment quick action
+                    if (unit != null && unit.isFactoryUnit())
+                      _QuickActionCard(
+                        icon: Icons.download,
+                        label: localizations.receiveProcessedShipment,
+                        onTap: () => context.push('/shipments/receive-processed'),
+                      ),
                     // All units: View Shipments
                     _QuickActionCard(
                       icon: Icons.visibility,
                       label: localizations.viewShipment,
                       onTap: () => context.push('/shipments'),
                     ),
-                    // All units: Supply Requests (if needed)
+                    // All units: Supply Requests (coming soon)
                     _QuickActionCard(
                       icon: Icons.assignment,
                       label: localizations.supplyRequests,
-                      onTap: () {
-                        // TODO: Navigate to supply requests
-                      },
+                      onTap: () => showComingSoonDialog(context),
                     ),
                     // PRESS only: Register Vehicle (item 13)
                     if (unit?.unitType == UnitType.press)
@@ -322,7 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 context.push('/shipments');
                 break;
               case 2:
-                // TODO: Navigate to orders
+                showComingSoonDialog(context);
                 break;
               case 3:
                 context.push('/settings');
@@ -330,6 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }
           },
           isRTL: isRTL,
+          supplyRequestsLabel: localizations.supplyRequests,
         ),
       ),
     );

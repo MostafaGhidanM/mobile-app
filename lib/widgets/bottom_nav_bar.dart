@@ -4,12 +4,20 @@ class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   final bool isRTL;
+  final String? homeLabel;
+  final String? shipmentsLabel;
+  final String? supplyRequestsLabel;
+  final String? moreLabel;
 
   const CustomBottomNavBar({
     Key? key,
     required this.currentIndex,
     required this.onTap,
     this.isRTL = false,
+    this.homeLabel,
+    this.shipmentsLabel,
+    this.supplyRequestsLabel,
+    this.moreLabel,
   }) : super(key: key);
 
   @override
@@ -21,19 +29,19 @@ class CustomBottomNavBar extends StatelessWidget {
       items: [
         BottomNavigationBarItem(
           icon: const Icon(Icons.home),
-          label: isRTL ? 'الرئيسية' : 'Home',
+          label: homeLabel ?? (isRTL ? 'الرئيسية' : 'Home'),
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.inventory_2),
-          label: isRTL ? 'الشحنات' : 'Shipments',
+          label: shipmentsLabel ?? (isRTL ? 'الشحنات' : 'Shipments'),
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.assignment),
-          label: isRTL ? 'الطلبات' : 'Orders',
+          label: supplyRequestsLabel ?? (isRTL ? 'طلبات التوريد' : 'Supply Requests'),
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.more_horiz),
-          label: isRTL ? 'المزيد' : 'More',
+          label: moreLabel ?? (isRTL ? 'المزيد' : 'More'),
         ),
       ],
     );

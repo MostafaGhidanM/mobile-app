@@ -122,6 +122,8 @@ class AppLocalizations {
   String get settings => translate('settings');
   String get submit => translate('submit');
   String get cancel => translate('cancel');
+  String get ok => translate('ok');
+  String get comingSoon => translate('coming_soon');
   String get save => translate('save');
   String get loading => translate('loading');
   String get error => translate('error');

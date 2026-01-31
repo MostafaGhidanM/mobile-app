@@ -7,6 +7,7 @@ import '../../localization/app_localizations.dart';
 import '../../core/services/shipment_service.dart';
 import '../../core/models/shipment.dart';
 import '../../features/auth/auth_provider.dart';
+import '../../core/utils/dialogs.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'shipment_card.dart';
 import 'processed_shipments_list_screen.dart';
@@ -174,7 +175,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                   // Already on shipments
                   break;
                 case 2:
-                  // TODO: Navigate to orders
+                  showComingSoonDialog(context);
                   break;
                 case 3:
                   context.push('/settings');
@@ -182,6 +183,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
               }
             },
             isRTL: isRTL,
+            supplyRequestsLabel: localizations.supplyRequests,
           ),
         ),
       ),
@@ -341,24 +343,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
   }
 
   Widget _buildFactoryShipmentsView(AppLocalizations localizations, bool isRTL) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: ElevatedButton.icon(
-            onPressed: () => context.push('/shipments/receive-processed'),
-            icon: const Icon(Icons.download),
-            label: const Text('Receive Processed Material Shipments'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
-        ),
-        const Expanded(
-          child: ProcessedShipmentsListScreen(),
-        ),
-      ],
-    );
+    return const ProcessedShipmentsListScreen();
   }
 }
 

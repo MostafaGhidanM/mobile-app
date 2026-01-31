@@ -2,13 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../features/auth/auth_provider.dart';
-import '../../widgets/bottom_nav_bar.dart';
+import '../../core/models/recycling_unit.dart';
 import '../../core/utils/storage.dart';
+import '../../core/utils/dialogs.dart';
+import '../../widgets/bottom_nav_bar.dart';
 import '../../main.dart';
 import 'package:go_router/go_router.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
+
+  static String _unitTypeLabel(UnitType type, AppLocalizations l10n) {
+    switch (type) {
+      case UnitType.press:
+        return l10n.translate('unit_type_press');
+      case UnitType.shredder:
+        return l10n.translate('unit_type_shredder');
+      case UnitType.washingLine:
+        return l10n.translate('unit_type_washing_line');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +67,9 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            localizations.translate('bulking_station'),
+                            unit?.unitType != null
+                                ? _unitTypeLabel(unit!.unitType!, localizations)
+                                : localizations.translate('bulking_station'),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -91,9 +106,7 @@ class SettingsScreen extends StatelessWidget {
                     _SettingsItem(
                       icon: Icons.person,
                       title: localizations.personalInformation,
-                      onTap: () {
-                        // TODO: Navigate to personal information
-                      },
+                      onTap: () => context.push('/settings/personal-info'),
                     ),
                     Divider(height: 1, color: Colors.grey[300]),
                     _SettingsItem(
@@ -127,9 +140,7 @@ class SettingsScreen extends StatelessWidget {
                     _SettingsItem(
                       icon: Icons.share,
                       title: localizations.shareApp,
-                      onTap: () {
-                        // TODO: Implement share functionality
-                      },
+                      onTap: () => showComingSoonDialog(context),
                     ),
                   ],
                 ),
@@ -147,17 +158,13 @@ class SettingsScreen extends StatelessWidget {
                     _SettingsItem(
                       icon: Icons.email,
                       title: localizations.contactUs,
-                      onTap: () {
-                        // TODO: Navigate to contact us
-                      },
+                      onTap: () => showComingSoonDialog(context),
                     ),
                     Divider(height: 1, color: Colors.grey[300]),
                     _SettingsItem(
                       icon: Icons.description,
                       title: localizations.termsAndPolicies,
-                      onTap: () {
-                        // TODO: Navigate to terms and policies
-                      },
+                      onTap: () => showComingSoonDialog(context),
                     ),
                   ],
                 ),
@@ -194,14 +201,14 @@ class SettingsScreen extends StatelessWidget {
                 context.push('/shipments');
                 break;
               case 2:
-                // TODO: Navigate to orders
+                showComingSoonDialog(context);
                 break;
               case 3:
-                // Already on settings
                 break;
             }
           },
           isRTL: isRTL,
+          supplyRequestsLabel: localizations.supplyRequests,
         ),
       ),
     );

@@ -23,6 +23,7 @@ import 'features/senders/register_sender_screen.dart';
 import 'features/auth/register_sender_self_screen.dart';
 import 'features/cars/register_car_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/settings/personal_info_screen.dart';
 import 'features/auth/register_unit_screen.dart';
 import 'features/notifications/notifications_screen.dart';
 import 'core/services/push_notification_service.dart';
@@ -258,6 +259,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/settings/personal-info',
+      builder: (context, state) => const PersonalInfoScreen(),
     ),
     GoRoute(
       path: '/register-unit',

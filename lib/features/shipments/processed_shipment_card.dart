@@ -103,6 +103,13 @@ class ProcessedShipmentCard extends StatelessWidget {
                 '${localizations.date} ${shipment.dateOfSending.year}-${shipment.dateOfSending.month.toString().padLeft(2, '0')}-${shipment.dateOfSending.day.toString().padLeft(2, '0')}',
                 style: const TextStyle(fontSize: 14),
               ),
+              if (shipment.tradeName != null && shipment.tradeName!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '${localizations.trade} ${shipment.tradeName}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
               if (shipment.pressUnitName != null) ...[
                 const SizedBox(height: 4),
                 Text(
