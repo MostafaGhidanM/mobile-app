@@ -37,7 +37,7 @@ void main() async {
     'api_base_url',
     AppConstants.baseUrl + AppConstants.apiPrefix,
   );
-  Workmanager().initialize(
+  await Workmanager().initialize(
     callbackDispatcher,
     isInDebugMode: false,
   );
